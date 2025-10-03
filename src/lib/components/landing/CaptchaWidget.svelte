@@ -17,26 +17,47 @@
       return;
     }
 
-    // Load Cloudflare Turnstile script in production
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    script.onload = initTurnstile;
-    document.head.appendChild(script);
+    // Check if Turnstile is already loaded
+    if (window.turnstile) {
+      initTurnstile();
+      return;
+    }
 
-    return () => {
-      // Cleanup if needed
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
+    // Only load script if not already present
+    if (!document.querySelector('script[src*="turnstile"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = initTurnstile;
+      script.onerror = () => {
+        console.error('Failed to load Turnstile script');
+        loading = false;
+      };
+      document.head.appendChild(script);
+    } else {
+      // Script exists, wait for it to load
+      const checkTurnstile = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(checkTurnstile);
+          initTurnstile();
+        }
+      }, 100);
+
+      setTimeout(() => clearInterval(checkTurnstile), 5000);
+    }
   });
 
   function initTurnstile() {
-    if (window.turnstile) {
+    if (window.turnstile && window.turnstile.render) {
       try {
         const siteKey = window.ENV?.PUBLIC_CAPTCHA_SITE_KEY || '';
+        if (!siteKey) {
+          console.error('CAPTCHA site key not found');
+          loading = false;
+          return;
+        }
+
         widgetId = window.turnstile.render('#captcha-container', {
           sitekey: siteKey,
           callback: (responseToken: string) => {
