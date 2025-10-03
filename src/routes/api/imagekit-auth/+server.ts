@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export const GET: RequestHandler = async ({ locals }) => {
   try {
