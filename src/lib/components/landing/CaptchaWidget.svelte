@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
-  import { env } from '$env/dynamic/public';
   import { dev } from '$app/environment';
 
   export let token: string = '';
@@ -37,8 +36,9 @@
   function initTurnstile() {
     if (window.turnstile) {
       try {
+        const siteKey = window.ENV?.PUBLIC_CAPTCHA_SITE_KEY || '';
         widgetId = window.turnstile.render('#captcha-container', {
-          sitekey: env.PUBLIC_CAPTCHA_SITE_KEY!,
+          sitekey: siteKey,
           callback: (responseToken: string) => {
             token = responseToken;
             loading = false;

@@ -1,11 +1,24 @@
 import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr';
-import { env } from '$env/dynamic/public';
 import type { Database } from './types/database.types';
+
+// Extend window to include ENV
+declare global {
+  interface Window {
+    ENV?: {
+      PUBLIC_SUPABASE_URL: string;
+      PUBLIC_SUPABASE_ANON_KEY: string;
+      PUBLIC_IMAGEKIT_PUBLIC_KEY: string;
+      PUBLIC_IMAGEKIT_URL_ENDPOINT: string;
+      PUBLIC_CAPTCHA_SITE_KEY: string;
+    };
+  }
+}
 
 let _supabase: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 export function getSupabase() {
   if (!_supabase && typeof window !== 'undefined') {
+    const env = window.ENV || {};
     _supabase = createBrowserClient<Database>(
       env.PUBLIC_SUPABASE_URL || '',
       env.PUBLIC_SUPABASE_ANON_KEY || ''
@@ -21,7 +34,8 @@ export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient<Da
   }
 });
 
-export function createSupabaseServerClient(fetch: typeof globalThis.fetch) {
+export function createSupabaseServerClient(fetch: typeof globalThis.fetch, platformEnv?: Record<string, string>) {
+  const env = platformEnv || process.env;
   const url = env.PUBLIC_SUPABASE_URL || '';
   const key = env.PUBLIC_SUPABASE_ANON_KEY || '';
 
