@@ -30,6 +30,8 @@
 	},
 	"dependencies": {
 		"@supabase/ssr": "^0.7.0",
-		"@supabase/supabase-js": "^2.58.0"
+		"@supabase/supabase-js": "^2.58.0",
+		"emoji-picker-element": "^1.27.0",
+		"imagekit-javascript": "^4.0.1"
 	}
 }

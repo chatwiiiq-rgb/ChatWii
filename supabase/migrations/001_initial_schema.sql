@@ -16,6 +16,8 @@ CREATE TABLE public.users (
   country TEXT NOT NULL,
   avatar_url TEXT,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'banned', 'kicked')),
+  is_online BOOLEAN DEFAULT FALSE,
+  last_seen TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -23,6 +25,7 @@ CREATE TABLE public.users (
 CREATE INDEX idx_users_nickname ON public.users(nickname);
 CREATE INDEX idx_users_status ON public.users(status);
 CREATE INDEX idx_users_created_at ON public.users(created_at DESC);
+CREATE INDEX idx_users_online ON public.users(is_online) WHERE is_online = TRUE;
 
 -- ============================================================================
 -- MESSAGES TABLE

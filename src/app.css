@@ -1,5 +1,57 @@
 @import "tailwindcss";
 
+/* Define dark mode variant for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Neutral Colors (Base UI) */
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+  --color-neutral-1000: #000000;
+
+  /* Primary Colors (Oranges - Brand Identity) */
+  --color-primary-100: #ffebe0;
+  --color-primary-200: #ffd5b9;
+  --color-primary-300: #ffb98a;
+  --color-primary-500: #f8954a;
+
+  /* Secondary Colors (Teals - Accents) */
+  --color-secondary-100: #d9f5f1;
+  --color-secondary-300: #80dcd0;
+  --color-secondary-500: #3ac6b3;
+  --color-secondary-600: #00a991;
+
+  /* Success (Greens) */
+  --color-success-100: #ddf3e7;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #20a967;
+
+  /* Danger (Reds/Corals) */
+  --color-danger-100: #ffe4e3;
+  --color-danger-500: #f76f69;
+
+  /* Warning (Yellows) */
+  --color-warning-100: #fff5d9;
+  --color-warning-500: #ffcc3d;
+
+  /* Text Colors */
+  --color-text-0: #ffffff;
+  --color-text-100: #e8eaf2;
+  --color-text-200: #d1d6e4;
+  --color-text-400: #929fb9;
+  --color-text-600: #58698d;
+  --color-text-800: #394a6f;
+  --color-text-1000: #141e33;
+}
+
 /* Dark mode root variables */
 :root {
   color-scheme: light dark;

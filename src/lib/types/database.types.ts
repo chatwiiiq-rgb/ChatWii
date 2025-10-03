@@ -22,6 +22,8 @@ export interface Database {
           country: string
           avatar_url: string | null
           status: 'active' | 'banned' | 'kicked'
+          is_online: boolean
+          last_seen: string
           created_at: string
           updated_at: string
         }
@@ -34,6 +36,8 @@ export interface Database {
           country: string
           avatar_url?: string | null
           status?: 'active' | 'banned' | 'kicked'
+          is_online?: boolean
+          last_seen?: string
           created_at?: string
           updated_at?: string
         }
@@ -46,6 +50,8 @@ export interface Database {
           country?: string
           avatar_url?: string | null
           status?: 'active' | 'banned' | 'kicked'
+          is_online?: boolean
+          last_seen?: string
           created_at?: string
           updated_at?: string
         }
