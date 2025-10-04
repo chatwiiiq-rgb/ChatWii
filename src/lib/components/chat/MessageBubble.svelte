@@ -49,8 +49,8 @@
       class:bg-transparent={message.message_type === 'image'}
     >
       {#if message.message_type === 'image'}
-        <!-- Image Container (300x300 max) -->
-        <div class="relative w-[300px] h-[300px] bg-neutral-100 dark:bg-neutral-900 rounded-xl overflow-hidden">
+        <!-- Image Container (200x200 mobile, 300x300 desktop) -->
+        <div class="relative w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] bg-neutral-100 dark:bg-neutral-900 rounded-xl overflow-hidden">
           <img
             src={message.content}
             alt="Shared image"

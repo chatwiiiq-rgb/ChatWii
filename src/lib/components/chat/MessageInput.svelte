@@ -78,7 +78,7 @@
   }
 </script>
 
-<div class="bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
+<div class="bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 pb-safe">
   <!-- Rate limit warning -->
   {#if isRateLimited}
     <div class="px-6 py-2 bg-danger-100 dark:bg-danger-500/20 border-b border-danger-500">
