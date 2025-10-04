@@ -17,11 +17,24 @@
       return;
     }
 
-    // Check if Turnstile is already loaded
-    if (window.turnstile) {
-      initTurnstile();
-      return;
-    }
+    // Wait for Turnstile to be fully ready
+    const waitForTurnstile = () => {
+      const checkInterval = setInterval(() => {
+        if (window.turnstile && typeof window.turnstile.render === 'function') {
+          clearInterval(checkInterval);
+          initTurnstile();
+        }
+      }, 100);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!widgetId) {
+          console.error('Turnstile failed to load after 10 seconds');
+          loading = false;
+        }
+      }, 10000);
+    };
 
     // Only load script if not already present
     if (!document.querySelector('script[src*="turnstile"]')) {
@@ -29,22 +42,15 @@
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
       script.async = true;
       script.defer = true;
-      script.onload = initTurnstile;
+      script.onload = waitForTurnstile;
       script.onerror = () => {
         console.error('Failed to load Turnstile script');
         loading = false;
       };
       document.head.appendChild(script);
     } else {
-      // Script exists, wait for it to load
-      const checkTurnstile = setInterval(() => {
-        if (window.turnstile) {
-          clearInterval(checkTurnstile);
-          initTurnstile();
-        }
-      }, 100);
-
-      setTimeout(() => clearInterval(checkTurnstile), 5000);
+      // Script already exists, just wait for API
+      waitForTurnstile();
     }
   });
 
