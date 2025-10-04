@@ -27,8 +27,9 @@ export class ImageService {
   constructor() {
     // Initialize ImageKit client
     // Note: Public key is safe to expose in frontend
-    const publicKey = import.meta.env.PUBLIC_IMAGEKIT_PUBLIC_KEY;
-    const urlEndpoint = import.meta.env.PUBLIC_IMAGEKIT_URL_ENDPOINT;
+    // Try window.ENV first (injected by hooks.server.ts), then fall back to import.meta.env
+    const publicKey = (typeof window !== 'undefined' && window.ENV?.PUBLIC_IMAGEKIT_PUBLIC_KEY) || import.meta.env.PUBLIC_IMAGEKIT_PUBLIC_KEY;
+    const urlEndpoint = (typeof window !== 'undefined' && window.ENV?.PUBLIC_IMAGEKIT_URL_ENDPOINT) || import.meta.env.PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
     if (publicKey && urlEndpoint) {
       this.imagekit = new ImageKit({

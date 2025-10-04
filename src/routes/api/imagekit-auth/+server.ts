@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import crypto from 'node:crypto';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, platform }) => {
   try {
     // Verify user is authenticated
     const session = await locals.supabase.auth.getSession();
@@ -10,8 +10,11 @@ export const GET: RequestHandler = async ({ locals }) => {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
-    const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
+    // Get env from Cloudflare platform or process.env fallback
+    const env = (platform?.env as Record<string, string>) || process.env;
+
+    const privateKey = env.IMAGEKIT_PRIVATE_KEY;
+    const publicKey = env.PUBLIC_IMAGEKIT_PUBLIC_KEY;
 
     if (!privateKey || !publicKey) {
       console.error('ImageKit credentials not configured');
