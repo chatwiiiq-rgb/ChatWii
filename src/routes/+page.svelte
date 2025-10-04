@@ -73,9 +73,9 @@
 
 <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900">
   <!-- Header -->
-  <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-16 px-6 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <img src="/logo/logo.png" alt="ChatWii - Anonymous Private Chat Platform" class="h-10 w-auto" />
+  <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <img src="/logo/logo.png" alt="ChatWii - Anonymous Private Chat Platform" class="h-8 sm:h-10 w-auto" />
     </div>
     <nav aria-label="Theme settings">
       <ThemeToggle />
@@ -83,17 +83,17 @@
   </header>
 
   <!-- Main Content -->
-  <main class="flex items-center justify-center px-4 py-8">
-    <div class="w-full max-w-md bg-white dark:bg-neutral-800 rounded-2xl shadow-lg p-10">
+  <main class="flex items-center justify-center px-4 py-6 sm:py-8 min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)]">
+    <div class="w-full max-w-md bg-white dark:bg-neutral-800 rounded-xl sm:rounded-2xl shadow-lg p-6 sm:p-8 md:p-10">
       <!-- Title Section -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-neutral-900 dark:text-white mb-2">
+      <div class="text-center mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white mb-2">
           Welcome to ChatWii
         </h1>
-        <h2 class="text-2xl font-medium text-secondary-500 mb-2">
+        <h2 class="text-xl sm:text-2xl font-medium text-secondary-500 mb-2">
           Chat with Strangers
         </h2>
-        <p class="text-sm text-neutral-600 dark:text-neutral-400">
+        <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
           Connect instantly and anonymously with complete privacy!
         </p>
       </div>
@@ -134,7 +134,7 @@
           type="submit"
           disabled={!isFormValid}
           aria-label={isSubmitting ? 'Starting chat, please wait' : 'Start anonymous chat'}
-          class="w-full py-4 rounded-lg font-medium text-base flex items-center justify-center gap-2 mb-6 transition-all"
+          class="w-full py-3 sm:py-4 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 mb-4 sm:mb-6 transition-all"
           class:bg-neutral-300={!isFormValid}
           class:text-neutral-500={!isFormValid}
           class:cursor-not-allowed={!isFormValid}
@@ -144,16 +144,16 @@
           class:opacity-75={isSubmitting}
         >
           {#if isSubmitting}
-            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Starting Chat...
+            <span class="text-sm sm:text-base">Starting Chat...</span>
           {:else}
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            Start Chat
+            <span class="text-sm sm:text-base">Start Chat</span>
           {/if}
         </button>
       </form>
@@ -161,9 +161,9 @@
       <!-- Footer Info -->
       <div class="text-center">
         {#if isDetectingCountry}
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">Detecting location...</p>
+          <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">Detecting location...</p>
         {:else}
-          <p class="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">
+          <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">
             <CountryFlag countryCode={detectedCountry} size="lg" />
             <span>Connecting from {countryName}</span>
           </p>

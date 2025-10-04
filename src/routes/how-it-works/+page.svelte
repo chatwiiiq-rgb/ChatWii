@@ -10,7 +10,7 @@
 
 <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900 flex flex-col">
   <!-- Header -->
-  <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-16 px-6 flex items-center justify-between">
+  <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between">
     <div class="flex items-center gap-4">
       <button
         on:click={() => goto('/')}
@@ -21,13 +21,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
       </button>
-      <img src="/logo/logo.png" alt="ChatWii" class="h-10 w-auto" />
+      <img src="/logo/logo.png" alt="ChatWii" class="h-8 sm:h-10 w-auto" />
     </div>
     <ThemeToggle />
   </header>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-4 py-12 flex-1">
+  <main class="container mx-auto px-4 py-4 sm:py-6 sm:py-8 md:py-12 flex-1">
     <div class="max-w-4xl mx-auto">
       <!-- Hero Section -->
       <div class="text-center mb-16">
