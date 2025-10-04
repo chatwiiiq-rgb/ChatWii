@@ -8,6 +8,9 @@
   let widgetId: string | null = null;
   let loading = true;
 
+  // Global singleton to track Turnstile loading state
+  const TURNSTILE_GLOBAL = '__TURNSTILE_LOADING__';
+
   onMount(() => {
     // Bypass CAPTCHA in development mode
     if (dev) {
@@ -17,42 +20,82 @@
       return;
     }
 
-    // Wait for Turnstile to be fully ready
-    const waitForTurnstile = () => {
-      const checkInterval = setInterval(() => {
-        if (window.turnstile && typeof window.turnstile.render === 'function') {
+    // Initialize Turnstile with proper singleton pattern
+    loadAndInitTurnstile();
+  });
+
+  async function loadAndInitTurnstile() {
+    try {
+      // Wait for Turnstile to be ready
+      await ensureTurnstileLoaded();
+
+      // Initialize the widget once ready
+      initTurnstile();
+    } catch (error) {
+      console.error('Turnstile loading failed:', error);
+      loading = false;
+    }
+  }
+
+  function ensureTurnstileLoaded(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Check if already loaded and ready
+      if (window.turnstile && typeof window.turnstile.render === 'function') {
+        resolve();
+        return;
+      }
+
+      // Check if currently loading
+      if (window[TURNSTILE_GLOBAL] === 'loading') {
+        // Wait for the loading to complete
+        const checkInterval = setInterval(() => {
+          if (window.turnstile && typeof window.turnstile.render === 'function') {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+
+        setTimeout(() => {
           clearInterval(checkInterval);
-          initTurnstile();
-        }
-      }, 100);
+          reject(new Error('Turnstile load timeout'));
+        }, 15000);
+        return;
+      }
 
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        if (!widgetId) {
-          console.error('Turnstile failed to load after 10 seconds');
-          loading = false;
-        }
-      }, 10000);
-    };
+      // Mark as loading
+      window[TURNSTILE_GLOBAL] = 'loading';
 
-    // Only load script if not already present
-    if (!document.querySelector('script[src*="turnstile"]')) {
+      // Load the script
       const script = document.createElement('script');
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
       script.async = true;
       script.defer = true;
-      script.onload = waitForTurnstile;
-      script.onerror = () => {
-        console.error('Failed to load Turnstile script');
-        loading = false;
+
+      script.onload = () => {
+        // Poll for turnstile API availability
+        const checkInterval = setInterval(() => {
+          if (window.turnstile && typeof window.turnstile.render === 'function') {
+            clearInterval(checkInterval);
+            window[TURNSTILE_GLOBAL] = 'loaded';
+            resolve();
+          }
+        }, 50);
+
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          window[TURNSTILE_GLOBAL] = 'error';
+          reject(new Error('Turnstile API not available after script load'));
+        }, 15000);
       };
+
+      script.onerror = () => {
+        window[TURNSTILE_GLOBAL] = 'error';
+        reject(new Error('Failed to load Turnstile script'));
+      };
+
       document.head.appendChild(script);
-    } else {
-      // Script already exists, just wait for API
-      waitForTurnstile();
-    }
-  });
+    });
+  }
 
   function initTurnstile() {
     console.log('initTurnstile called');
@@ -98,12 +141,6 @@
   }
 </script>
 
-<svelte:head>
-  <script>
-    // TypeScript declaration for Turnstile
-    window.turnstile = window.turnstile || {};
-  </script>
-</svelte:head>
 
 <div class="mb-5">
   <div
