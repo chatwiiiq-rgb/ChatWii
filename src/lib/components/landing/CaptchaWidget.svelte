@@ -98,14 +98,9 @@
   }
 
   function initTurnstile() {
-    console.log('initTurnstile called');
-    console.log('window.turnstile exists:', !!window.turnstile);
-    console.log('window.turnstile.render exists:', !!(window.turnstile && window.turnstile.render));
-
     if (window.turnstile && window.turnstile.render) {
       try {
         const siteKey = window.ENV?.PUBLIC_CAPTCHA_SITE_KEY || '';
-        console.log('Site key:', siteKey);
 
         if (!siteKey) {
           console.error('CAPTCHA site key not found');
@@ -113,11 +108,9 @@
           return;
         }
 
-        console.log('Rendering Turnstile widget...');
         widgetId = window.turnstile.render('#captcha-container', {
           sitekey: siteKey,
           callback: (responseToken: string) => {
-            console.log('Turnstile callback - token received');
             token = responseToken;
             loading = false;
             dispatch('verify', responseToken);
@@ -128,7 +121,6 @@
             dispatch('error');
           },
         });
-        console.log('Turnstile widget rendered, ID:', widgetId);
         loading = false;
       } catch (error) {
         console.error('Turnstile initialization error:', error);

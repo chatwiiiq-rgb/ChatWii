@@ -115,8 +115,6 @@
         <!-- CAPTCHA -->
         <CaptchaWidget
           bind:token={captchaToken}
-          on:verify={() => console.log('CAPTCHA verified')}
-          on:error={() => console.log('CAPTCHA error')}
         />
 
         <!-- Error Message -->
@@ -166,7 +164,7 @@
           <p class="text-sm text-neutral-600 dark:text-neutral-400">Detecting location...</p>
         {:else}
           <p class="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">
-            <CountryFlag countryCode={detectedCountry} size="md" />
+            <CountryFlag countryCode={detectedCountry} size="lg" />
             <span>Connecting from {countryName}</span>
           </p>
         {/if}

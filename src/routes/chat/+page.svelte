@@ -580,7 +580,7 @@
                   <span class="text-neutral-500 dark:text-neutral-400">•</span>
                   <span class="text-neutral-500 dark:text-neutral-400">{selectedUser.age}</span>
                   <span class="text-neutral-500 dark:text-neutral-400">•</span>
-                  <CountryFlag countryCode={selectedUser.country} size="md" />
+                  <CountryFlag countryCode={selectedUser.country} size="sm" />
                 </div>
               </div>
             </div>
