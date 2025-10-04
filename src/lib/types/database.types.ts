@@ -209,6 +209,32 @@ export interface Database {
           created_at?: string
         }
       }
+      feedback: {
+        Row: {
+          id: string
+          email: string | null
+          message: string
+          ip_address: string
+          user_agent: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email?: string | null
+          message: string
+          ip_address: string
+          user_agent: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string | null
+          message?: string
+          ip_address?: string
+          user_agent?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
