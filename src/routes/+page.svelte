@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import ThemeToggle from '$lib/components/shared/ThemeToggle.svelte';
   import CountryFlag from '$lib/components/shared/CountryFlag.svelte';
@@ -9,15 +10,28 @@
   import Footer from '$lib/components/shared/Footer.svelte';
   import { AuthService } from '$lib/services/authService';
   import { authStore } from '$lib/stores/authStore';
+  import { CountryService } from '$lib/services/countryService';
 
   let nickname = '';
   let nicknameError = '';
   let gender: 'male' | 'female' | null = null;
   let age: number | null = null;
   let captchaToken = '';
-  let detectedCountry = 'ps'; // Palestine (auto-detected via Cloudflare in production)
+  let detectedCountry = 'us'; // Default fallback
   let isSubmitting = false;
   let errorMessage = '';
+  let isDetectingCountry = true;
+
+  onMount(async () => {
+    // Detect country on component mount
+    try {
+      detectedCountry = await CountryService.getCountry();
+    } catch (error) {
+      console.error('Country detection failed:', error);
+    } finally {
+      isDetectingCountry = false;
+    }
+  });
 
   $: isFormValid = nickname.length >= 3 && !nicknameError && gender && age && age >= 18 && captchaToken && !isSubmitting;
 
@@ -145,10 +159,14 @@
 
       <!-- Footer Info -->
       <div class="text-center">
-        <p class="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">
-          <CountryFlag countryCode={detectedCountry} size="md" />
-          <span>Connecting from Palestine</span>
-        </p>
+        {#if isDetectingCountry}
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">Detecting location...</p>
+        {:else}
+          <p class="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">
+            <CountryFlag countryCode={detectedCountry} size="md" />
+            <span>Connecting from {detectedCountry.toUpperCase()}</span>
+          </p>
+        {/if}
       </div>
     </div>
   </main>
