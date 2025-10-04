@@ -4,10 +4,6 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Get env from Cloudflare platform or process.env fallback
   const env = (event.platform?.env as Record<string, string>) || process.env;
 
-  // Log for debugging
-  console.log('Hook running, env keys:', Object.keys(env));
-  console.log('Has SUPABASE_URL:', !!env.PUBLIC_SUPABASE_URL);
-
   // Inject Cloudflare Pages environment variables into the page
   const response = await resolve(event, {
     transformPageChunk: ({ html }) => {

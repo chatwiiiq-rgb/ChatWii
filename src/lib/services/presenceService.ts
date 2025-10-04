@@ -53,13 +53,12 @@ export class PresenceService {
       await this.channel
         .on('presence', { event: 'sync' }, () => {
           // Presence state synced
-          console.log('Presence synced');
         })
         .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-          console.log('User joined:', key, newPresences);
+          // User joined
         })
         .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-          console.log('User left:', key, leftPresences);
+          // User left
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
@@ -184,8 +183,6 @@ export class PresenceService {
             last_seen: new Date().toISOString(),
           })
           .eq('id', userId);
-
-        console.log('Heartbeat sent');
       } catch (error) {
         console.error('Heartbeat failed:', error);
       }

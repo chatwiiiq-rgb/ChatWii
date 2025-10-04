@@ -21,7 +21,6 @@ function createThemeStore() {
         }
 
         set(theme);
-        console.log('Theme initialized:', theme, 'DOM has dark class:', document.documentElement.classList.contains('dark'));
       }
     },
     toggle: () => {
@@ -38,8 +37,6 @@ function createThemeStore() {
           } else {
             document.documentElement.classList.remove('dark');
           }
-
-          console.log('Theme toggled to:', newTheme, 'DOM has dark class:', document.documentElement.classList.contains('dark'));
 
           return newTheme;
         });

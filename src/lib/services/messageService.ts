@@ -51,7 +51,6 @@ export class MessageService {
       // Subscribe to channel
       await this.channel.subscribe();
 
-      console.log(`Message channel initialized for user ${userId}`);
       return { success: true };
     } catch (error) {
       console.error('Failed to initialize messaging:', error);

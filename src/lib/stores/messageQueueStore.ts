@@ -15,9 +15,7 @@ function createMessageQueueStore() {
   isOnline.subscribe((online) => {
     if (online) {
       const queue = get({ subscribe });
-      if (queue.length > 0) {
-        console.log(`Attempting to send ${queue.length} queued messages`);
-      }
+      // Queue will be processed by message service
     }
   });
 
