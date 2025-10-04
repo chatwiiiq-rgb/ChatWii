@@ -155,17 +155,8 @@ export class ImageService {
         );
       });
 
-      // Track upload in database
-      const { error: dbError } = await supabase.from('photo_tracking').insert({
-        user_id: userId,
-        image_url: uploadResult.url,
-        imagekit_file_id: uploadResult.fileId,
-      });
-
-      if (dbError) {
-        console.error('Track photo error:', dbError);
-        // Continue anyway - upload succeeded
-      }
+      // Track upload in database (skip for now - anonymous users don't need tracking)
+      // TODO: Implement client-side rate limiting if needed
 
       return {
         success: true,

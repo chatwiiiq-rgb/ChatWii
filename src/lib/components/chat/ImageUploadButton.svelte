@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { imageService } from '$lib/services/imageService';
+  import ImagePreviewModal from './ImagePreviewModal.svelte';
 
   export let userId: string;
   export let disabled = false;
@@ -13,6 +14,10 @@
   let error = '';
   let uploadCount = 0;
   let uploadLimit = 20;
+
+  // Preview state
+  let selectedFile: File | null = null;
+  let previewUrl: string = '';
 
   // Load current upload count on mount
   async function loadUploadCount() {
@@ -29,18 +34,35 @@
     fileInput.click();
   }
 
-  async function handleFileSelect(event: Event) {
+  function handleFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
     if (!file) return;
+
+    // Create preview URL
+    selectedFile = file;
+    previewUrl = URL.createObjectURL(file);
+  }
+
+  function handleCancelPreview() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    selectedFile = null;
+    previewUrl = '';
+    fileInput.value = ''; // Reset input
+  }
+
+  async function handleConfirmSend() {
+    if (!selectedFile) return;
 
     error = '';
     isUploading = true;
     uploadProgress = 0;
 
     try {
-      const result = await imageService.uploadImage(userId, file, (progress) => {
+      const result = await imageService.uploadImage(userId, selectedFile, (progress) => {
         uploadProgress = progress;
       });
 
@@ -56,7 +78,7 @@
     } finally {
       isUploading = false;
       uploadProgress = 0;
-      input.value = ''; // Reset input
+      handleCancelPreview(); // Clean up
     }
   }
 </script>
@@ -114,3 +136,11 @@
     {error}
   </div>
 {/if}
+
+<!-- Image Preview Modal -->
+<ImagePreviewModal
+  imageFile={selectedFile}
+  imagePreviewUrl={previewUrl}
+  on:cancel={handleCancelPreview}
+  on:send={handleConfirmSend}
+/>

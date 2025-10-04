@@ -12,8 +12,10 @@
   const TURNSTILE_GLOBAL = '__TURNSTILE_LOADING__';
 
   onMount(() => {
-    // Bypass CAPTCHA in development mode
-    if (dev) {
+    // Bypass CAPTCHA only in local development (localhost)
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (isLocalDev) {
       token = 'dev-bypass-token';
       loading = false;
       dispatch('verify', token);
