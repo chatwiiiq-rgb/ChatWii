@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { createSupabaseServerClient } from '$lib/supabase';
+import { createSupabaseAdminClient } from '$lib/supabase';
 
 const RATE_LIMIT_HOURS = 3;
 
@@ -9,8 +9,8 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
     // Get env from Cloudflare platform or process.env fallback
     const env = (platform?.env as Record<string, string>) || process.env;
 
-    // Create Supabase client for server-side
-    const supabase = createSupabaseServerClient(fetch, env);
+    // Create Supabase admin client for server-side (bypasses RLS)
+    const supabase = createSupabaseAdminClient(fetch, env);
 
     const { email, message } = await request.json();
 

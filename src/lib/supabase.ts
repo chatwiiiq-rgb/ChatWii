@@ -57,3 +57,31 @@ export function createSupabaseServerClient(fetch: typeof globalThis.fetch, platf
     },
   });
 }
+
+export function createSupabaseAdminClient(fetch: typeof globalThis.fetch, platformEnv?: Record<string, string>) {
+  const env = platformEnv || process.env;
+  const url = env.PUBLIC_SUPABASE_URL || '';
+  const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+  if (!url || !serviceKey) {
+    console.error('Supabase admin env vars missing:', { url: !!url, serviceKey: !!serviceKey });
+  }
+
+  return createServerClient<Database>(url, serviceKey, {
+    cookies: {
+      getAll() {
+        return [];
+      },
+      setAll(cookiesToSet) {
+        // Handle cookies in SvelteKit server-side
+      },
+    },
+    global: {
+      fetch,
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
