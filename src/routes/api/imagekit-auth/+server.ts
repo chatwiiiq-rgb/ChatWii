@@ -10,8 +10,8 @@ export const GET: RequestHandler = async ({ platform, getClientAddress }) => {
     const privateKey = env.IMAGEKIT_PRIVATE_KEY;
     const publicKey = env.PUBLIC_IMAGEKIT_PUBLIC_KEY;
 
-    if (!privateKey || !publicKey) {
-      console.error('ImageKit credentials not configured');
+    if (!privateKey) {
+      console.error('IMAGEKIT_PRIVATE_KEY not configured');
       console.error('Available env keys:', Object.keys(env));
       return json({ error: 'Server configuration error' }, { status: 500 });
     }
