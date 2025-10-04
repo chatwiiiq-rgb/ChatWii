@@ -197,9 +197,17 @@
       </div>
 
       <!-- Additional Info -->
-      <p class="text-center text-sm text-neutral-600 dark:text-neutral-400 mt-6">
-        You can submit feedback once every 3 hours
-      </p>
+      <div class="text-center mt-6 space-y-2">
+        <p class="text-sm text-neutral-600 dark:text-neutral-400">
+          You can submit feedback once every 3 hours
+        </p>
+        <p class="text-sm text-neutral-600 dark:text-neutral-400">
+          If the feedback form doesn't work, you can email us directly at{' '}
+          <a href="mailto:support@chatwii.com" class="text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400 underline font-medium">
+            support@chatwii.com
+          </a>
+        </p>
+      </div>
     </div>
   </main>
 </div>
