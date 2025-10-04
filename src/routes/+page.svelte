@@ -71,11 +71,17 @@
   }
 </script>
 
+<svelte:head>
+  <title>ChatWii - Anonymous Chat with Strangers | Free & Private</title>
+  <meta name="description" content="Chat anonymously with strangers worldwide on ChatWii. No registration, completely free, and 100% private. Connect instantly with people from around the globe." />
+  <meta name="keywords" content="anonymous chat, chat with strangers, free chat, private messaging, random chat, online chat" />
+</svelte:head>
+
 <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900">
   <!-- Header -->
   <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between">
     <div class="flex items-center gap-2 sm:gap-3">
-      <img src="/logo/logo.png" alt="ChatWii - Anonymous Private Chat Platform" class="h-8 sm:h-10 w-auto" />
+      <img src="/logo/logo.png" alt="ChatWii - Anonymous Private Chat Platform" width="40" height="40" class="h-8 sm:h-10 w-auto" />
     </div>
     <nav aria-label="Theme settings">
       <ThemeToggle />

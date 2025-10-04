@@ -5,7 +5,8 @@
 </script>
 
 <svelte:head>
-  <title>About - ChatWii</title>
+  <title>About ChatWii - Anonymous Chat Platform | Our Mission & Values</title>
+  <meta name="description" content="Learn about ChatWii's mission to provide safe, anonymous conversations. Discover our commitment to privacy, respect, and meaningful connections worldwide." />
 </svelte:head>
 
 <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900 flex flex-col">

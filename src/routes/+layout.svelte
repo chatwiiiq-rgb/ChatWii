@@ -15,9 +15,9 @@
 
   // Default SEO metadata - can be overridden by individual pages via page data
   $: seoData = $page.data.seo || {
-    title: 'ChatWii - Anonymous Private Chat',
-    description: 'Anonymous 1-on-1 text chat with no registration required. Private, secure real-time messaging with complete privacy. Start chatting instantly.',
-    keywords: ['anonymous chat', 'private messaging', 'secure chat', 'no registration', 'instant messaging', 'privacy chat'],
+    title: 'ChatWii - Anonymous Chat with Strangers | Free & Private',
+    description: 'Chat anonymously with strangers worldwide on ChatWii. No registration, completely free, and 100% private. Connect instantly with people from around the globe.',
+    keywords: ['anonymous chat', 'chat with strangers', 'free chat', 'private messaging', 'random chat', 'online chat', 'no registration chat'],
     image: {
       url: 'https://chatwii.com/images/og-image.jpg',
       alt: 'ChatWii - Anonymous Private Chat Platform'

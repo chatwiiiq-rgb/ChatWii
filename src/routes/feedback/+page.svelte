@@ -66,7 +66,8 @@
 </script>
 
 <svelte:head>
-  <title>Feedback - ChatWii</title>
+  <title>Send Feedback - ChatWii | Help Us Improve</title>
+  <meta name="description" content="Share your feedback to help improve ChatWii. Your suggestions and comments help us create a better anonymous chat experience for everyone." />
 </svelte:head>
 
 <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900">
