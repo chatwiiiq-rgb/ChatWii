@@ -20,6 +20,7 @@
   import Avatar from '$lib/components/shared/Avatar.svelte';
   import type { PresenceUser } from '$lib/services/presenceService';
   import { countryCodeToName } from '$lib/utils/countries';
+  import { isMobile } from '$lib/utils/deviceDetection';
 
   let loading = true;
   let userProfile: any = null;
@@ -44,6 +45,7 @@
   let historyConversations: any[] = []; // Sent messages only
   let searchQuery = '';
   let showFilterModal = false;
+  let showMobileUserList = false; // Mobile user list overlay
 
   // Filter state
   let filterGender: string[] = []; // ['male', 'female']
@@ -278,6 +280,11 @@
     selectedUser = user;
     blockError = '';
     blockSuccess = '';
+
+    // Close mobile user list when user is selected
+    if ($isMobile) {
+      showMobileUserList = false;
+    }
 
     // Load conversation history
     if (userProfile) {
@@ -532,9 +539,9 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex h-[calc(100vh-4rem)]">
-      <!-- User List Sidebar -->
-      <aside class="w-80 border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+    <main class="flex h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)]">
+      <!-- User List Sidebar - Hidden on mobile, visible on desktop -->
+      <aside class="hidden md:block w-80 border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
         <!-- Header with count -->
         <div class="p-4 border-b border-neutral-200 dark:border-neutral-700">
           <div class="flex items-center gap-2">
@@ -617,48 +624,59 @@
       <div class="flex-1 flex flex-col bg-neutral-100 dark:bg-neutral-900">
         {#if selectedUser}
           <!-- Chat Header -->
-          <div class="h-16 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-6 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+          <div class="h-14 sm:h-16 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-3 sm:px-6 flex items-center justify-between">
+            <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <!-- Mobile: Back button (shows user list) -->
+              <button
+                on:click={() => selectedUser = null}
+                class="md:hidden p-2 -ml-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                title="Back to user list"
+              >
+                <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
               <!-- Avatar with gender ring -->
-              <div class="rounded-full p-0.5" class:bg-pink-300={selectedUser.gender === 'female'} class:bg-blue-500={selectedUser.gender === 'male'}>
+              <div class="rounded-full p-0.5 flex-shrink-0" class:bg-pink-300={selectedUser.gender === 'female'} class:bg-blue-500={selectedUser.gender === 'male'}>
                 <Avatar gender={selectedUser.gender} size="sm" />
               </div>
 
               <!-- User info -->
-              <div>
+              <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="font-medium text-neutral-900 dark:text-white">{selectedUser.nickname}</span>
+                  <span class="font-medium text-neutral-900 dark:text-white truncate text-sm sm:text-base">{selectedUser.nickname}</span>
                 </div>
-                <div class="flex items-center gap-2 text-xs">
+                <div class="flex items-center gap-1 sm:gap-2 text-xs">
                   <span class:text-pink-400={selectedUser.gender === 'female'} class:text-blue-500={selectedUser.gender === 'male'}>
                     {selectedUser.gender === 'female' ? 'Female' : 'Male'}
                   </span>
-                  <span class="text-neutral-500 dark:text-neutral-400">•</span>
-                  <span class="text-neutral-500 dark:text-neutral-400">{selectedUser.age}</span>
-                  <span class="text-neutral-500 dark:text-neutral-400">•</span>
+                  <span class="text-neutral-500 dark:text-neutral-400 hidden sm:inline">•</span>
+                  <span class="text-neutral-500 dark:text-neutral-400 hidden sm:inline">{selectedUser.age}</span>
+                  <span class="text-neutral-500 dark:text-neutral-400 hidden sm:inline">•</span>
                   <CountryFlag countryCode={selectedUser.country} size="sm" />
                 </div>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <!-- Block/Unblock/Report status messages -->
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <!-- Block/Unblock/Report status messages - Hidden on mobile -->
               {#if reportSuccess}
-                <div class="px-3 py-1 bg-success-100 dark:bg-success-500/20 text-success-500 text-sm rounded-lg">
+                <div class="hidden sm:block px-3 py-1 bg-success-100 dark:bg-success-500/20 text-success-500 text-sm rounded-lg">
                   {reportSuccess}
                 </div>
               {/if}
               {#if blockSuccess}
-                <div class="px-3 py-1 bg-success-100 dark:bg-success-500/20 text-success-500 text-sm rounded-lg">
+                <div class="hidden sm:block px-3 py-1 bg-success-100 dark:bg-success-500/20 text-success-500 text-sm rounded-lg">
                   {blockSuccess}
                 </div>
               {/if}
               {#if blockError}
-                <div class="px-3 py-1 bg-danger-100 dark:bg-danger-500/20 text-danger-500 text-sm rounded-lg">
+                <div class="hidden sm:block px-3 py-1 bg-danger-100 dark:bg-danger-500/20 text-danger-500 text-sm rounded-lg">
                   {blockError}
                 </div>
               {/if}
               {#if reportError}
-                <div class="px-3 py-1 bg-danger-100 dark:bg-danger-500/20 text-danger-500 text-sm rounded-lg">
+                <div class="hidden sm:block px-3 py-1 bg-danger-100 dark:bg-danger-500/20 text-danger-500 text-sm rounded-lg">
                   {reportError}
                 </div>
               {/if}
@@ -669,10 +687,10 @@
                 on:unblock={handleUnblockUser}
                 on:report={handleReportUser}
               />
-              <!-- Close conversation button -->
+              <!-- Close conversation button - Desktop only -->
               <button
                 on:click={() => selectedUser = null}
-                class="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                class="hidden md:block p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
                 title="Close conversation"
               >
                 <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -713,14 +731,91 @@
             {rateLimit}
           />
         {:else}
-          <!-- Empty State -->
-          <div class="flex-1 flex items-center justify-center">
-            <div class="text-center">
-              <svg class="w-24 h-24 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <h3 class="text-xl font-semibold text-neutral-900 dark:text-white mb-2">Select a user to start chatting</h3>
-              <p class="text-neutral-500 dark:text-neutral-400">Choose someone from the online users list</p>
+          <!-- Empty State - Mobile shows user list, Desktop shows placeholder -->
+          <div class="flex-1 flex flex-col">
+            <!-- Mobile: Show user list directly -->
+            <div class="md:hidden flex flex-col h-full">
+              <!-- Header -->
+              <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <h2 class="text-lg font-semibold text-success-500">Online Users:</h2>
+                  <span class="text-base font-bold text-success-500">{$onlineUserCount}</span>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 relative">
+                    <input
+                      type="text"
+                      bind:value={searchQuery}
+                      placeholder="Search users..."
+                      class="w-full pl-9 pr-3 py-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+                    />
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <button
+                    on:click={() => showFilterModal = true}
+                    class="relative p-2 rounded-lg transition-colors"
+                    class:bg-neutral-100={!hasActiveFilters}
+                    class:dark:bg-neutral-700={!hasActiveFilters}
+                    class:bg-secondary-100={hasActiveFilters}
+                    class:dark:bg-secondary-900={hasActiveFilters}
+                    title="Filter users"
+                  >
+                    <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" class:text-secondary-500={hasActiveFilters} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    {#if hasActiveFilters}
+                      <span class="absolute -top-1 -right-1 w-3 h-3 bg-secondary-500 rounded-full"></span>
+                    {/if}
+                  </button>
+                </div>
+              </div>
+
+              <!-- User List -->
+              <div class="flex-1 overflow-y-auto">
+                {#if filteredUsers.length === 0 && searchQuery}
+                  <div class="p-8 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <p class="text-neutral-500 dark:text-neutral-400">No users found</p>
+                  </div>
+                {:else if $sortedOnlineUsers.length === 0}
+                  <div class="p-8 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <p class="text-neutral-500 dark:text-neutral-400">No users online</p>
+                  </div>
+                {:else}
+                  <div class="p-2 space-y-1">
+                    {#each filteredUsers as user (user.user_id)}
+                      {#if user.user_id !== userProfile?.id}
+                        <UserListItem
+                          {user}
+                          isSelected={false}
+                          isBlocked={$blockedUserIds.includes(user.user_id)}
+                          onClick={() => selectUser(user)}
+                        />
+                      {/if}
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            </div>
+
+            <!-- Desktop: Placeholder -->
+            <div class="hidden md:flex flex-1 items-center justify-center">
+              <div class="text-center">
+                <svg class="w-24 h-24 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-neutral-900 dark:text-white mb-2">Select a user to start chatting</h3>
+                <p class="text-neutral-500 dark:text-neutral-400">Choose someone from the online users list</p>
+              </div>
             </div>
           </div>
         {/if}
