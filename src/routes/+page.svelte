@@ -11,6 +11,7 @@
   import { AuthService } from '$lib/services/authService';
   import { authStore } from '$lib/stores/authStore';
   import { CountryService } from '$lib/services/countryService';
+  import { countryCodeToName } from '$lib/utils/countries';
 
   let nickname = '';
   let nicknameError = '';
@@ -21,6 +22,8 @@
   let isSubmitting = false;
   let errorMessage = '';
   let isDetectingCountry = true;
+
+  $: countryName = countryCodeToName[detectedCountry.toUpperCase()] || detectedCountry.toUpperCase();
 
   onMount(async () => {
     // Detect country on component mount
@@ -164,7 +167,7 @@
         {:else}
           <p class="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">
             <CountryFlag countryCode={detectedCountry} size="md" />
-            <span>Connecting from {detectedCountry.toUpperCase()}</span>
+            <span>Connecting from {countryName}</span>
           </p>
         {/if}
       </div>
