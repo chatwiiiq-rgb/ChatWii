@@ -7,10 +7,18 @@ const RATE_LIMIT_HOURS = 3;
 export const POST: RequestHandler = async ({ request, getClientAddress, platform, fetch }) => {
   try {
     // Get env from Cloudflare platform or process.env fallback
-    const env = (platform?.env as Record<string, string>) || process.env;
+    const env = platform?.env || process.env;
+
+    // Debug logging
+    console.log('Feedback API - Environment check:', {
+      hasPlatform: !!platform,
+      hasEnv: !!env,
+      hasSupabaseUrl: !!(env as any).PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!(env as any).SUPABASE_SERVICE_ROLE_KEY,
+    });
 
     // Create Supabase admin client for server-side (bypasses RLS)
-    const supabase = createSupabaseAdminClient(fetch, env);
+    const supabase = createSupabaseAdminClient(fetch, env as Record<string, string>);
 
     const { email, message } = await request.json();
 
@@ -51,7 +59,13 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
       .single();
 
     if (error) {
-      console.error('Feedback insert error:', error);
+      console.error('Feedback insert error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        fullError: JSON.stringify(error, null, 2)
+      });
 
       // Check if it's a rate limit violation from the trigger
       if (error.code === '23505' || error.message?.includes('rate_limit_exceeded')) {
@@ -65,12 +79,21 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
         );
       }
 
-      return json({ success: false, error: 'Failed to submit feedback' }, { status: 500 });
+      return json({
+        success: false,
+        error: 'Failed to submit feedback',
+        debug: { code: error.code, message: error.message }
+      }, { status: 500 });
     }
 
     return json({ success: true, data });
   } catch (error) {
     console.error('Feedback submission error:', error);
-    return json({ success: false, error: 'An unexpected error occurred' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return json({
+      success: false,
+      error: errorMessage,
+      debug: error instanceof Error ? { stack: error.stack } : { raw: String(error) }
+    }, { status: 500 });
   }
 };
