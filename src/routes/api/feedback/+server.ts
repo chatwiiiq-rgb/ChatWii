@@ -53,8 +53,8 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
     if (error) {
       console.error('Feedback insert error:', error);
 
-      // Check if it's a rate limit violation (unique constraint on ip_address)
-      if (error.code === '23505' && error.message?.includes('idx_feedback_rate_limit')) {
+      // Check if it's a rate limit violation from the trigger
+      if (error.code === '23505' || error.message?.includes('rate_limit_exceeded')) {
         return json(
           {
             success: false,
