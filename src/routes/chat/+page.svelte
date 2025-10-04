@@ -480,19 +480,20 @@
     </div>
   </div>
 {:else}
-  <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900">
+  <div class="min-h-screen bg-neutral-100 dark:bg-neutral-900 overflow-x-hidden">
     <!-- Header -->
-    <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-16 px-6 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="/logo/logo.png" alt="ChatWii" class="h-10 w-auto" />
+    <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <img src="/logo/logo.png" alt="ChatWii" class="h-8 sm:h-10 w-auto flex-shrink-0" />
         {#if userProfile}
-          <div class="flex items-center gap-2">
+          <!-- Hide welcome text on mobile -->
+          <div class="hidden md:flex items-center gap-2">
             <span class="text-sm text-neutral-600 dark:text-neutral-400">Welcome,</span>
             <span class="text-sm font-medium text-neutral-900 dark:text-white">{userProfile.nickname}</span>
           </div>
         {/if}
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         <!-- Inbox Icon with Badge -->
         <button
           on:click={() => { showInboxModal = true; unreadCount = 0; }}
@@ -539,9 +540,9 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)]">
+    <main class="flex h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] w-full overflow-hidden">
       <!-- User List Sidebar - Hidden on mobile, visible on desktop -->
-      <aside class="hidden md:block w-80 border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+      <aside class="hidden md:block md:w-80 border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex-shrink-0">
         <!-- Header with count -->
         <div class="p-4 border-b border-neutral-200 dark:border-neutral-700">
           <div class="flex items-center gap-2">
@@ -621,7 +622,7 @@
       </aside>
 
       <!-- Chat Area -->
-      <div class="flex-1 flex flex-col bg-neutral-100 dark:bg-neutral-900">
+      <div class="flex-1 flex flex-col bg-neutral-100 dark:bg-neutral-900 min-w-0 w-full md:w-auto">
         {#if selectedUser}
           <!-- Chat Header -->
           <div class="h-14 sm:h-16 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-3 sm:px-6 flex items-center justify-between">
