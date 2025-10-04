@@ -2,14 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import crypto from 'node:crypto';
 
-export const GET: RequestHandler = async ({ locals, platform }) => {
+export const GET: RequestHandler = async ({ platform, getClientAddress }) => {
   try {
-    // Verify user is authenticated
-    const session = await locals.supabase.auth.getSession();
-    if (!session?.data?.session) {
-      return json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Get env from Cloudflare platform or process.env fallback
     const env = (platform?.env as Record<string, string>) || process.env;
 
@@ -18,10 +12,13 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
     if (!privateKey || !publicKey) {
       console.error('ImageKit credentials not configured');
+      console.error('Available env keys:', Object.keys(env));
       return json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Generate authentication parameters for ImageKit upload
+    // Note: This endpoint is public since users are anonymous
+    // Upload limits are enforced via daily photo tracking in the database
     const token = crypto.randomBytes(16).toString('hex');
     const expire = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
     const signature = crypto
