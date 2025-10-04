@@ -1,10 +1,17 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { createSupabaseServerClient } from '$lib/supabase';
 
 const RATE_LIMIT_HOURS = 3;
 
-export const POST: RequestHandler = async ({ request, getClientAddress, locals }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress, platform, fetch }) => {
   try {
+    // Get env from Cloudflare platform or process.env fallback
+    const env = (platform?.env as Record<string, string>) || process.env;
+
+    // Create Supabase client for server-side
+    const supabase = createSupabaseServerClient(fetch, env);
+
     const { email, message } = await request.json();
 
     // Validate message
@@ -32,7 +39,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress, locals }
     const rateLimitTime = new Date();
     rateLimitTime.setHours(rateLimitTime.getHours() - RATE_LIMIT_HOURS);
 
-    const { data: recentFeedback, error: checkError } = await locals.supabase
+    const { data: recentFeedback, error: checkError } = await supabase
       .from('feedback')
       .select('id')
       .eq('ip_address', ipAddress)
@@ -56,7 +63,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress, locals }
     }
 
     // Insert feedback
-    const { data, error } = await locals.supabase
+    const { data, error } = await supabase
       .from('feedback')
       .insert({
         email: email?.trim() || null,
