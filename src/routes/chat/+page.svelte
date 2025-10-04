@@ -494,6 +494,19 @@
         {/if}
       </div>
       <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <!-- Mobile: User List Toggle Button -->
+        <button
+          on:click={() => showMobileUserList = !showMobileUserList}
+          class="md:hidden p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+          class:bg-neutral-100={showMobileUserList}
+          class:dark:bg-neutral-700={showMobileUserList}
+          title="User List"
+        >
+          <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </button>
+
         <!-- Inbox Icon with Badge -->
         <button
           on:click={() => { showInboxModal = true; unreadCount = 0; }}
@@ -732,96 +745,133 @@
             {rateLimit}
           />
         {:else}
-          <!-- Empty State - Mobile shows user list, Desktop shows placeholder -->
+          <!-- Empty State - Desktop shows placeholder -->
           <div class="flex-1 flex flex-col">
-            <!-- Mobile: Show user list directly -->
-            <div class="md:hidden flex flex-col h-full">
-              <!-- Header -->
-              <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 p-4">
-                <div class="flex items-center gap-2 mb-3">
-                  <h2 class="text-lg font-semibold text-success-500">Online Users:</h2>
-                  <span class="text-base font-bold text-success-500">{$onlineUserCount}</span>
-                </div>
-
-                <!-- Search and Filter -->
-                <div class="flex items-center gap-2">
-                  <div class="flex-1 relative">
-                    <input
-                      type="text"
-                      bind:value={searchQuery}
-                      placeholder="Search users..."
-                      class="w-full pl-9 pr-3 py-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500"
-                    />
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <button
-                    on:click={() => showFilterModal = true}
-                    class="relative p-2 rounded-lg transition-colors"
-                    class:bg-neutral-100={!hasActiveFilters}
-                    class:dark:bg-neutral-700={!hasActiveFilters}
-                    class:bg-secondary-100={hasActiveFilters}
-                    class:dark:bg-secondary-900={hasActiveFilters}
-                    title="Filter users"
-                  >
-                    <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" class:text-secondary-500={hasActiveFilters} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    {#if hasActiveFilters}
-                      <span class="absolute -top-1 -right-1 w-3 h-3 bg-secondary-500 rounded-full"></span>
-                    {/if}
-                  </button>
-                </div>
-              </div>
-
-              <!-- User List -->
-              <div class="flex-1 overflow-y-auto">
-                {#if filteredUsers.length === 0 && searchQuery}
-                  <div class="p-8 text-center">
-                    <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <p class="text-neutral-500 dark:text-neutral-400">No users found</p>
-                  </div>
-                {:else if $sortedOnlineUsers.length === 0}
-                  <div class="p-8 text-center">
-                    <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p class="text-neutral-500 dark:text-neutral-400">No users online</p>
-                  </div>
-                {:else}
-                  <div class="p-2 space-y-1">
-                    {#each filteredUsers as user (user.user_id)}
-                      {#if user.user_id !== userProfile?.id}
-                        <UserListItem
-                          {user}
-                          isSelected={false}
-                          isBlocked={$blockedUserIds.includes(user.user_id)}
-                          onClick={() => selectUser(user)}
-                        />
-                      {/if}
-                    {/each}
-                  </div>
-                {/if}
-              </div>
-            </div>
-
             <!-- Desktop: Placeholder -->
             <div class="hidden md:flex flex-1 items-center justify-center">
               <div class="text-center">
                 <svg class="w-24 h-24 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <h3 class="text-xl font-semibold text-neutral-900 dark:text-white mb-2">Select a user to start chatting</h3>
-                <p class="text-neutral-500 dark:text-neutral-400">Choose someone from the online users list</p>
+                <h3 class="text-xl font-medium text-neutral-900 dark:text-white mb-2">
+                  Select a user to start chatting
+                </h3>
+                <p class="text-neutral-500 dark:text-neutral-400">
+                  Choose someone from the online users list
+                </p>
+              </div>
+            </div>
+
+            <!-- Mobile: Empty state with prompt -->
+            <div class="md:hidden flex-1 flex items-center justify-center p-8">
+              <div class="text-center">
+                <svg class="w-20 h-20 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 class="text-lg font-medium text-neutral-900 dark:text-white mb-2">
+                  Tap the user list icon above
+                </h3>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                  Select a user to start chatting
+                </p>
               </div>
             </div>
           </div>
         {/if}
       </div>
     </main>
+
+    <!-- Mobile User List Overlay -->
+    {#if showMobileUserList}
+      <div
+        class="md:hidden fixed inset-0 bg-black/30 z-40"
+        on:click={() => showMobileUserList = false}
+      ></div>
+      <div class="md:hidden fixed inset-y-0 left-0 w-[85%] max-w-sm bg-white dark:bg-neutral-800 z-50 flex flex-col shadow-xl">
+        <!-- Header -->
+        <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-semibold text-success-500">Online Users:</h2>
+              <span class="text-base font-bold text-success-500">{$onlineUserCount}</span>
+            </div>
+            <!-- Close Button -->
+            <button
+              on:click={() => showMobileUserList = false}
+              class="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+              title="Close"
+            >
+              <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Search and Filter -->
+          <div class="flex items-center gap-2">
+            <div class="flex-1 relative">
+              <input
+                type="text"
+                bind:value={searchQuery}
+                placeholder="Search users..."
+                class="w-full pl-9 pr-3 py-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+              />
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <button
+              on:click={() => showFilterModal = true}
+              class="relative p-2 rounded-lg transition-colors"
+              class:bg-neutral-100={!hasActiveFilters}
+              class:dark:bg-neutral-700={!hasActiveFilters}
+              class:bg-secondary-100={hasActiveFilters}
+              class:dark:bg-secondary-900={hasActiveFilters}
+              title="Filter users"
+            >
+              <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" class:text-secondary-500={hasActiveFilters} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              {#if hasActiveFilters}
+                <span class="absolute -top-1 -right-1 w-3 h-3 bg-secondary-500 rounded-full"></span>
+              {/if}
+            </button>
+          </div>
+        </div>
+
+        <!-- User List -->
+        <div class="flex-1 overflow-y-auto">
+          {#if filteredUsers.length === 0 && searchQuery}
+            <div class="p-8 text-center">
+              <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <p class="text-neutral-500 dark:text-neutral-400">No users found</p>
+            </div>
+          {:else if $sortedOnlineUsers.length === 0}
+            <div class="p-8 text-center">
+              <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p class="text-neutral-500 dark:text-neutral-400">No users online</p>
+            </div>
+          {:else}
+            <div class="p-2 space-y-1">
+              {#each filteredUsers as user (user.user_id)}
+                {#if user.user_id !== userProfile?.id}
+                  <UserListItem
+                    {user}
+                    isSelected={false}
+                    isBlocked={$blockedUserIds.includes(user.user_id)}
+                    onClick={() => { selectUser(user); showMobileUserList = false; }}
+                  />
+                {/if}
+              {/each}
+            </div>
+          {/if}
+        </div>
+      </div>
+    {/if}
 
     <!-- Report Modal -->
     <ReportModal
