@@ -31,36 +31,12 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
       }
     }
 
-    // Get client IP and user agent for rate limiting
+    // Get client IP and user agent
     const ipAddress = getClientAddress();
     const userAgent = request.headers.get('user-agent') || '';
 
-    // Check rate limit - has this IP submitted in last N hours?
-    const rateLimitTime = new Date();
-    rateLimitTime.setHours(rateLimitTime.getHours() - RATE_LIMIT_HOURS);
-
-    const { data: recentFeedback, error: checkError } = await supabase
-      .from('feedback')
-      .select('id')
-      .eq('ip_address', ipAddress)
-      .gte('created_at', rateLimitTime.toISOString())
-      .limit(1);
-
-    if (checkError) {
-      console.error('Rate limit check error:', checkError);
-      return json({ success: false, error: 'Failed to check rate limit' }, { status: 500 });
-    }
-
-    if (recentFeedback && recentFeedback.length > 0) {
-      return json(
-        {
-          success: false,
-          error: `Please wait ${RATE_LIMIT_HOURS} hours between feedback submissions`,
-          rateLimited: true,
-        },
-        { status: 429 }
-      );
-    }
+    // Note: Rate limiting is enforced by database constraints
+    // The database will reject duplicate submissions from same IP within time window
 
     // Insert feedback
     const { data, error } = await supabase
@@ -76,6 +52,19 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
 
     if (error) {
       console.error('Feedback insert error:', error);
+
+      // Check if it's a rate limit violation (unique constraint on ip_address)
+      if (error.code === '23505' && error.message?.includes('idx_feedback_rate_limit')) {
+        return json(
+          {
+            success: false,
+            error: `Please wait ${RATE_LIMIT_HOURS} hours between feedback submissions`,
+            rateLimited: true,
+          },
+          { status: 429 }
+        );
+      }
+
       return json({ success: false, error: 'Failed to submit feedback' }, { status: 500 });
     }
 
