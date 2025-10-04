@@ -40,7 +40,8 @@
   let showLogoutConfirm = false;
   let showInboxModal = false;
   let unreadCount = 0;
-  let conversationHistory: any[] = [];
+  let inboxConversations: any[] = []; // Incoming messages only
+  let historyConversations: any[] = []; // Sent messages only
   let searchQuery = '';
   let showFilterModal = false;
 
@@ -50,22 +51,47 @@
   let filterAgeMax = 90;
   let filterCountries: string[] = []; // Country codes
 
-  // Load conversation history from localStorage on mount
+  // Load inbox and history from localStorage on mount
   if (typeof window !== 'undefined') {
-    const savedHistory = localStorage.getItem('chatwii_conversation_history');
+    const savedInbox = localStorage.getItem('chatwii_inbox');
+    const savedHistory = localStorage.getItem('chatwii_history');
+
+    if (savedInbox) {
+      try {
+        inboxConversations = JSON.parse(savedInbox);
+      } catch (e) {
+        console.error('Failed to load inbox:', e);
+      }
+    }
+
     if (savedHistory) {
       try {
-        conversationHistory = JSON.parse(savedHistory);
+        historyConversations = JSON.parse(savedHistory);
       } catch (e) {
-        console.error('Failed to load conversation history:', e);
+        console.error('Failed to load history:', e);
       }
     }
   }
 
-  // Save conversation history to localStorage whenever it changes
-  $: if (typeof window !== 'undefined' && conversationHistory) {
-    localStorage.setItem('chatwii_conversation_history', JSON.stringify(conversationHistory));
+  // Save inbox to localStorage whenever it changes
+  $: if (typeof window !== 'undefined' && inboxConversations) {
+    localStorage.setItem('chatwii_inbox', JSON.stringify(inboxConversations));
   }
+
+  // Save history to localStorage whenever it changes
+  $: if (typeof window !== 'undefined' && historyConversations) {
+    localStorage.setItem('chatwii_history', JSON.stringify(historyConversations));
+  }
+
+  // Sort inbox by most recent message time
+  $: sortedInbox = [...inboxConversations].sort((a, b) => {
+    return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+  });
+
+  // Sort history by most recent message time
+  $: sortedHistory = [...historyConversations].sort((a, b) => {
+    return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+  });
 
   $: isSelectedUserBlocked = selectedUser ? $blockedUserIds.includes(selectedUser.user_id) : false;
 
@@ -148,29 +174,52 @@
             unreadCount++;
           }
 
-          // Update conversation history
+          // Update inbox and history separately
           const otherUserId = message.sender_id === user.id ? message.receiver_id : message.sender_id;
           const otherUser = $sortedOnlineUsers.find(u => u.user_id === otherUserId);
 
-          const existingConvIndex = conversationHistory.findIndex(c => c.user_id === otherUserId);
-          if (existingConvIndex >= 0) {
-            // Update existing conversation
-            conversationHistory[existingConvIndex] = {
-              ...conversationHistory[existingConvIndex],
-              last_message: message.message_type === 'image' ? '📷 Image' : message.content,
-              last_message_time: message.created_at,
-              unread: message.sender_id !== user.id ? (conversationHistory[existingConvIndex].unread || 0) + 1 : 0
-            };
-            conversationHistory = [...conversationHistory];
-          } else if (otherUser) {
-            // Add new conversation
-            conversationHistory = [...conversationHistory, {
-              user_id: otherUserId,
-              nickname: otherUser.nickname,
-              last_message: message.message_type === 'image' ? '📷 Image' : message.content,
-              last_message_time: message.created_at,
-              unread: message.sender_id !== user.id ? 1 : 0
-            }];
+          const messagePreview = message.message_type === 'image' ? '📷 Image' : message.content;
+
+          // If this is an INCOMING message, update inbox
+          if (message.sender_id !== user.id) {
+            const existingInboxIndex = inboxConversations.findIndex(c => c.user_id === otherUserId);
+            if (existingInboxIndex >= 0) {
+              inboxConversations[existingInboxIndex] = {
+                ...inboxConversations[existingInboxIndex],
+                last_message: messagePreview,
+                last_message_time: message.created_at,
+                unread: (inboxConversations[existingInboxIndex].unread || 0) + 1
+              };
+              inboxConversations = [...inboxConversations];
+            } else if (otherUser) {
+              inboxConversations = [...inboxConversations, {
+                user_id: otherUserId,
+                nickname: otherUser.nickname,
+                last_message: messagePreview,
+                last_message_time: message.created_at,
+                unread: 1
+              }];
+            }
+          }
+
+          // If this is an OUTGOING message (sent by me), update history
+          if (message.sender_id === user.id) {
+            const existingHistoryIndex = historyConversations.findIndex(c => c.user_id === otherUserId);
+            if (existingHistoryIndex >= 0) {
+              historyConversations[existingHistoryIndex] = {
+                ...historyConversations[existingHistoryIndex],
+                last_message: messagePreview,
+                last_message_time: message.created_at
+              };
+              historyConversations = [...historyConversations];
+            } else if (otherUser) {
+              historyConversations = [...historyConversations, {
+                user_id: otherUserId,
+                nickname: otherUser.nickname,
+                last_message: messagePreview,
+                last_message_time: message.created_at
+              }];
+            }
           }
         });
 
@@ -213,6 +262,13 @@
     await messageService.disconnect();
     await presenceStore.leave();
     blockStore.clear();
+
+    // Clear conversation data from localStorage (anti-stalking)
+    localStorage.removeItem('chatwii_inbox');
+    localStorage.removeItem('chatwii_history');
+    inboxConversations = [];
+    historyConversations = [];
+
     await AuthService.signOut();
     authStore.clear();
     goto('/feedback');
@@ -741,23 +797,29 @@
           </button>
         </div>
         <div class="overflow-y-auto h-[calc(100vh-5rem)] p-4">
-          {#if conversationHistory.length === 0}
+          {#if sortedInbox.length === 0}
             <div class="text-center py-12">
               <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">No messages yet</p>
-              <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Start chatting with someone</p>
+              <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Waiting for incoming messages</p>
             </div>
           {:else}
             <div class="space-y-2">
-              {#each conversationHistory as conv}
+              {#each sortedInbox as conv}
                 <button
                   on:click={() => {
                     const user = $sortedOnlineUsers.find(u => u.user_id === conv.user_id);
                     if (user) {
                       selectUser(user);
                       showInboxModal = false;
+                      // Clear unread count for this conversation
+                      const convIndex = inboxConversations.findIndex(c => c.user_id === conv.user_id);
+                      if (convIndex >= 0) {
+                        inboxConversations[convIndex].unread = 0;
+                        inboxConversations = [...inboxConversations];
+                      }
                     }
                   }}
                   class="w-full text-left p-3 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg cursor-pointer transition-colors"
@@ -797,16 +859,17 @@
           </button>
         </div>
         <div class="overflow-y-auto h-[calc(100vh-5rem)] p-4">
-          {#if conversationHistory.length === 0}
+          {#if sortedHistory.length === 0}
             <div class="text-center py-12">
               <svg class="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">No conversation history yet</p>
+              <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Your sent conversations will appear here</p>
             </div>
           {:else}
             <div class="space-y-2">
-              {#each conversationHistory as conv}
+              {#each sortedHistory as conv}
                 <button
                   on:click={() => {
                     const user = $sortedOnlineUsers.find(u => u.user_id === conv.user_id);
