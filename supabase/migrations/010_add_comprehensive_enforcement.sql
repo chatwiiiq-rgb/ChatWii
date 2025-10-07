@@ -7,6 +7,9 @@
 -- 1. MESSAGE CONTENT VALIDATION
 -- ============================================
 
+-- Drop existing function if signature changed
+DROP FUNCTION IF EXISTS sanitize_message_content() CASCADE;
+
 -- Enhanced sanitize function to include profanity filter and message length validation
 CREATE OR REPLACE FUNCTION sanitize_message_content()
 RETURNS TRIGGER AS $$
@@ -59,6 +62,13 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Recreate trigger (dropped by CASCADE)
+DROP TRIGGER IF EXISTS sanitize_message_trigger ON messages;
+CREATE TRIGGER sanitize_message_trigger
+  BEFORE INSERT ON messages
+  FOR EACH ROW
+  EXECUTE FUNCTION sanitize_message_content();
 
 -- ============================================
 -- 2. MESSAGE RATE LIMITING
@@ -173,6 +183,9 @@ CREATE TRIGGER user_registration_validation_trigger
 -- ============================================
 -- 4. MESSAGE RETENTION (Cleanup Job)
 -- ============================================
+
+-- Drop existing function if return type changed
+DROP FUNCTION IF EXISTS cleanup_old_messages();
 
 -- Function to clean up old messages based on retention setting
 CREATE OR REPLACE FUNCTION cleanup_old_messages()
