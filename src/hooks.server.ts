@@ -7,8 +7,12 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Get env from Cloudflare platform or process.env fallback
   const env = (event.platform?.env as Record<string, string>) || process.env;
 
-  // Check maintenance mode (skip for admin dashboard access)
-  if (!event.url.pathname.startsWith('/dashboard-x9k2p7') && !event.url.pathname.startsWith('/api/admin')) {
+  // Check maintenance mode (skip for admin dashboard and API access)
+  const isAdminPath = event.url.pathname.startsWith('/dashboard-x9k2p7') ||
+                      event.url.pathname.startsWith('/api/admin') ||
+                      event.url.pathname.startsWith('/api/');
+
+  if (!isAdminPath) {
     try {
       const supabase = createSupabaseAdminClient(fetch, env);
       const maintenanceMode = await isMaintenanceMode(supabase);
