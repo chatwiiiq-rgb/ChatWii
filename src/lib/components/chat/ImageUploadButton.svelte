@@ -141,6 +141,7 @@
 <ImagePreviewModal
   imageFile={selectedFile}
   imagePreviewUrl={previewUrl}
+  isUploading={isUploading}
   on:cancel={handleCancelPreview}
   on:send={handleConfirmSend}
 />

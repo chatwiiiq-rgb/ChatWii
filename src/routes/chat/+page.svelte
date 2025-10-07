@@ -956,16 +956,26 @@
               {#each sortedInbox as conv}
                 <button
                   on:click={() => {
-                    const user = $sortedOnlineUsers.find(u => u.user_id === conv.user_id);
-                    if (user) {
-                      selectUser(user);
-                      showInboxModal = false;
-                      // Clear unread count for this conversation
-                      const convIndex = inboxConversations.findIndex(c => c.user_id === conv.user_id);
-                      if (convIndex >= 0) {
-                        inboxConversations[convIndex].unread = 0;
-                        inboxConversations = [...inboxConversations];
-                      }
+                    // Try to find in online users first, otherwise create a temporary user object
+                    let user = $sortedOnlineUsers.find(u => u.user_id === conv.user_id);
+                    if (!user) {
+                      // User is offline, create a minimal user object from conversation data
+                      user = {
+                        user_id: conv.user_id,
+                        nickname: conv.nickname,
+                        gender: conv.gender || 'unknown',
+                        age: conv.age || 0,
+                        country: conv.country || 'Unknown',
+                        online: false
+                      };
+                    }
+                    selectUser(user);
+                    showInboxModal = false;
+                    // Clear unread count for this conversation
+                    const convIndex = inboxConversations.findIndex(c => c.user_id === conv.user_id);
+                    if (convIndex >= 0) {
+                      inboxConversations[convIndex].unread = 0;
+                      inboxConversations = [...inboxConversations];
                     }
                   }}
                   class="w-full text-left p-3 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg cursor-pointer transition-colors"
@@ -1018,11 +1028,21 @@
               {#each sortedHistory as conv}
                 <button
                   on:click={() => {
-                    const user = $sortedOnlineUsers.find(u => u.user_id === conv.user_id);
-                    if (user) {
-                      selectUser(user);
-                      showHistorySidebar = false;
+                    // Try to find in online users first, otherwise create a temporary user object
+                    let user = $sortedOnlineUsers.find(u => u.user_id === conv.user_id);
+                    if (!user) {
+                      // User is offline, create a minimal user object from conversation data
+                      user = {
+                        user_id: conv.user_id,
+                        nickname: conv.nickname,
+                        gender: conv.gender || 'unknown',
+                        age: conv.age || 0,
+                        country: conv.country || 'Unknown',
+                        online: false
+                      };
                     }
+                    selectUser(user);
+                    showHistorySidebar = false;
                   }}
                   class="w-full text-left p-3 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg cursor-pointer transition-colors"
                 >

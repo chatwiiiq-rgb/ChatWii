@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let gender: 'male' | 'female';
+  export let gender: 'male' | 'female' | 'unknown';
   export let size: 'sm' | 'md' | 'lg' | 'xl' = 'md';
   export let avatarUrl: string | null = null;
 
@@ -11,7 +11,7 @@
   };
 
   // Standard users get predefined avatar based on gender
-  $: defaultAvatar = `/avatars/standard/${gender}.png`;
+  $: defaultAvatar = `/avatars/standard/${gender || 'unknown'}.png`;
   $: displayAvatar = avatarUrl || defaultAvatar;
 </script>
 

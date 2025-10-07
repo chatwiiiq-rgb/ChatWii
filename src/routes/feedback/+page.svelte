@@ -34,12 +34,19 @@
 
       const data = await response.json();
 
+      console.log('Feedback response:', { status: response.status, data });
+
       if (!response.ok) {
         if (data.rateLimited) {
           rateLimited = true;
-          error = data.error || 'Please wait a few hours before submitting again';
+          error = data.error || 'Please wait 3 hours between feedback submissions';
         } else {
-          error = data.error || 'Failed to submit feedback';
+          error = data.error || 'Failed to submit feedback. Please try again.';
+          if (data.debug) {
+            console.error('Feedback error details:', data.debug);
+            error += ` (Debug: ${JSON.stringify(data.debug)})`;
+          }
+          console.error('Feedback error:', data);
         }
         return;
       }
@@ -120,7 +127,7 @@
                 bind:value={email}
                 placeholder="your@email.com"
                 disabled={isSubmitting}
-                class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-colors"
+                class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-colors disabled:opacity-50"
               />
             </div>
 
@@ -137,7 +144,7 @@
                 maxlength="400"
                 disabled={isSubmitting}
                 required
-                class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:border-transparent resize-none transition-colors"
+                class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:border-transparent resize-none transition-colors disabled:opacity-50"
               ></textarea>
               <div class="flex justify-between items-center mt-2">
                 <span class="text-xs text-neutral-500 dark:text-neutral-400">
@@ -200,13 +207,10 @@
       <!-- Additional Info -->
       <div class="text-center mt-6 space-y-2">
         <p class="text-sm text-neutral-600 dark:text-neutral-400">
-          You can submit feedback once every 3 hours
+          Your feedback is sent directly to our team
         </p>
-        <p class="text-sm text-neutral-600 dark:text-neutral-400">
-          If the feedback form doesn't work, you can email us directly at{' '}
-          <a href="mailto:support@chatwii.com" class="text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400 underline font-medium">
-            support@chatwii.com
-          </a>
+        <p class="text-xs text-neutral-500 dark:text-neutral-500">
+          Rate limit: One submission per 3 hours
         </p>
       </div>
     </div>

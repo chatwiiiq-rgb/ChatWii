@@ -1,24 +1,47 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createSupabaseAdminClient } from '$lib/supabase';
-
-const RATE_LIMIT_HOURS = 3;
+import { getRateLimit, isFeatureEnabled } from '$lib/server/settings';
 
 export const POST: RequestHandler = async ({ request, getClientAddress, platform, fetch }) => {
   try {
     // Get env from Cloudflare platform or process.env fallback
-    const env = platform?.env || process.env;
+    const env = (platform?.env as Record<string, string>) || process.env as Record<string, string>;
 
     // Debug logging
     console.log('Feedback API - Environment check:', {
       hasPlatform: !!platform,
       hasEnv: !!env,
-      hasSupabaseUrl: !!(env as any).PUBLIC_SUPABASE_URL,
-      hasServiceKey: !!(env as any).SUPABASE_SERVICE_ROLE_KEY,
+      hasSupabaseUrl: !!env.PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!env.SUPABASE_SERVICE_ROLE_KEY,
+      urlValue: env.PUBLIC_SUPABASE_URL ? 'present' : 'missing',
+      keyValue: env.SUPABASE_SERVICE_ROLE_KEY ? 'present' : 'missing',
     });
 
+    // Ensure we have the required env vars
+    if (!env.PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+      return json({
+        success: false,
+        error: 'Server configuration error: Missing Supabase credentials',
+        debug: {
+          hasUrl: !!env.PUBLIC_SUPABASE_URL,
+          hasKey: !!env.SUPABASE_SERVICE_ROLE_KEY
+        }
+      }, { status: 500 });
+    }
+
     // Create Supabase admin client for server-side (bypasses RLS)
-    const supabase = createSupabaseAdminClient(fetch, env as Record<string, string>);
+    const supabase = createSupabaseAdminClient(fetch, env);
+
+    // Check if feedback is enabled (fallback to true)
+    const feedbackEnabled = await isFeatureEnabled(supabase, 'feedback');
+
+    if (!feedbackEnabled) {
+      return json({ success: false, error: 'Feedback submissions are currently disabled' }, { status: 403 });
+    }
+
+    // Get dynamic feedback cooldown from settings (fallback to 3 hours)
+    const rateLimitHours = await getRateLimit(supabase, 'feedback_cooldown_hours');
 
     const { email, message } = await request.json();
 
@@ -72,7 +95,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress, platform
         return json(
           {
             success: false,
-            error: `Please wait ${RATE_LIMIT_HOURS} hours between feedback submissions`,
+            error: `Please wait ${rateLimitHours} hours between feedback submissions`,
             rateLimited: true,
           },
           { status: 429 }

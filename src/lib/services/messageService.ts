@@ -65,7 +65,8 @@ export class MessageService {
     try {
       const { senderId, receiverId, content, messageType = 'text' } = params;
 
-      // Validate content length
+      // Validate content length (hardcoded for client-side validation)
+      // Server-side validation with dynamic settings happens in API route
       if (content.length > 160) {
         return { success: false, error: 'Message too long (max 160 characters)' };
       }
@@ -238,7 +239,8 @@ export class MessageService {
   }
 
   /**
-   * Check if user has reached rate limit (25 messages per minute)
+   * Check if user has reached rate limit (hardcoded for client-side)
+   * Server-side rate limiting with dynamic settings happens in API route
    */
   async checkRateLimit(userId: string): Promise<{ allowed: boolean; count: number; limit: number }> {
     const count = await this.getMessageCount(userId, 1);

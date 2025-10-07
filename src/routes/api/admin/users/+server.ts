@@ -13,33 +13,6 @@ export const GET: RequestHandler = async ({ platform, fetch, url }) => {
     const sortBy = url.searchParams.get('sortBy') || 'created_at';
     const sortOrder = url.searchParams.get('sortOrder') || 'desc';
 
-    // Get real-time presence state from Supabase Realtime
-    const channel = supabase.channel('online-users');
-    const presenceState = await new Promise<any>((resolve) => {
-      channel
-        .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState();
-          resolve(state);
-        })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            const state = channel.presenceState();
-            resolve(state);
-          }
-        });
-
-      // Timeout after 3 seconds
-      setTimeout(() => {
-        resolve({});
-      }, 3000);
-    });
-
-    // Extract online user IDs from presence state
-    const onlineUserIds = new Set(Object.keys(presenceState));
-
-    // Cleanup channel
-    await channel.unsubscribe();
-
     // Build query
     let query = supabase
       .from('users')
@@ -82,10 +55,9 @@ export const GET: RequestHandler = async ({ platform, fetch, url }) => {
       });
     }
 
-    // Add message counts and real-time online status to users
+    // Add message counts to users
     const usersWithStats = users?.map(user => ({
       ...user,
-      is_online: onlineUserIds.has(user.id),
       message_count: messageCounts[user.id] || 0
     }));
 

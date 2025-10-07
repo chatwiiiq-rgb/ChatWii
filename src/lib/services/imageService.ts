@@ -18,7 +18,8 @@ export interface DailyLimitCheck {
 /**
  * Image Service
  * Handles image uploads via ImageKit.io with daily limits
- * Users can upload max 15 images per 24 hours
+ * Client-side uses hardcoded limits (15 images, 5MB)
+ * Server-side validation with dynamic settings happens in API route
  */
 export class ImageService {
   private imagekit: ImageKit | null = null;
@@ -114,7 +115,8 @@ export class ImageService {
         return { success: false, error: 'File must be an image' };
       }
 
-      // Max file size: 5MB
+      // Max file size: 5MB (hardcoded for client-side validation)
+      // Server-side validation with dynamic settings happens in API route
       if (file.size > 5 * 1024 * 1024) {
         return { success: false, error: 'Image must be smaller than 5MB' };
       }

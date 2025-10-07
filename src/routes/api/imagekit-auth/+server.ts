@@ -1,11 +1,21 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import crypto from 'node:crypto';
+import { createSupabaseAdminClient } from '$lib/supabase';
+import { isFeatureEnabled } from '$lib/server/settings';
 
-export const GET: RequestHandler = async ({ platform, getClientAddress }) => {
+export const GET: RequestHandler = async ({ platform, getClientAddress, fetch }) => {
   try {
     // Get env from Cloudflare platform or process.env fallback
     const env = (platform?.env as Record<string, string>) || process.env;
+
+    // Check if image sharing is enabled (fallback to true)
+    const supabase = createSupabaseAdminClient(fetch, env);
+    const imageEnabled = await isFeatureEnabled(supabase, 'image_sharing');
+
+    if (!imageEnabled) {
+      return json({ error: 'Image sharing is currently disabled' }, { status: 403 });
+    }
 
     const privateKey = env.IMAGEKIT_PRIVATE_KEY;
     const publicKey = env.PUBLIC_IMAGEKIT_PUBLIC_KEY;
