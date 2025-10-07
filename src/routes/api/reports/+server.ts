@@ -14,15 +14,15 @@ export const POST: RequestHandler = async ({ request, platform, fetch, locals })
       return json({ success: false, error: 'Reporting is currently disabled' }, { status: 403 });
     }
 
-    const { reporter_id, reported_user_id, reason, description } = await request.json();
+    const { reporter_id, reported_id, reason, description } = await request.json();
 
     // Validate required fields
-    if (!reporter_id || !reported_user_id || !reason) {
+    if (!reporter_id || !reported_id || !reason) {
       return json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
     // Check if user is trying to report themselves
-    if (reporter_id === reported_user_id) {
+    if (reporter_id === reported_id) {
       return json({ success: false, error: 'You cannot report yourself' }, { status: 400 });
     }
 
@@ -58,7 +58,7 @@ export const POST: RequestHandler = async ({ request, platform, fetch, locals })
       .from('reports')
       .select('id')
       .eq('reporter_id', reporter_id)
-      .eq('reported_user_id', reported_user_id)
+      .eq('reported_id', reported_id)
       .gte('created_at', oneDayAgo.toISOString())
       .maybeSingle();
 
@@ -88,9 +88,9 @@ export const POST: RequestHandler = async ({ request, platform, fetch, locals })
       .from('reports')
       .insert({
         reporter_id,
-        reported_user_id,
+        reported_id,
         reason,
-        description: description?.trim() || null,
+        details: description?.trim() || null,
         status: 'pending',
       })
       .select()
