@@ -338,23 +338,31 @@
   }
 
   async function loadReports() {
+    console.log('[Reports] Starting to load reports...');
     isLoading = true;
     error = '';
 
     try {
+      console.log('[Reports] Fetching from /api/admin/reports');
       const response = await fetch('/api/admin/reports');
+      console.log('[Reports] Got response:', response.status, response.ok);
+
       const data = await response.json();
+      console.log('[Reports] Got data:', data);
 
       if (!response.ok) {
         error = data.error || 'Failed to load reports';
+        console.error('[Reports] Response not OK:', error);
         return;
       }
 
       reports = data.reports || [];
+      console.log('[Reports] Successfully loaded', reports.length, 'reports');
     } catch (err) {
       error = 'An error occurred while loading reports';
-      console.error('Load reports error:', err);
+      console.error('[Reports] Load reports error:', err);
     } finally {
+      console.log('[Reports] Setting isLoading = false');
       isLoading = false;
     }
   }
@@ -986,7 +994,7 @@
       {/if}
     {/if}
 
-    {:else}
+    {:else if activeTab === 'reports'}
     <!-- Reports Section -->
     <!-- Reports Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -1197,7 +1205,7 @@
       {/if}
     {/if}
 
-    {:else}
+    {:else if activeTab === 'users'}
     <!-- Users Section -->
     <!-- Users Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
