@@ -6,6 +6,7 @@
   import { authStore } from '$lib/stores/authStore';
   import ToastContainer from '$lib/components/shared/ToastContainer.svelte';
   import ConnectionStatus from '$lib/components/shared/ConnectionStatus.svelte';
+  import AnnouncementBanner from '$lib/components/shared/AnnouncementBanner.svelte';
   import SEO from '$lib/components/SEO/index.svelte';
 
   onMount(() => {
@@ -27,6 +28,7 @@
 
 <SEO {...seoData} />
 
+<AnnouncementBanner />
 <ConnectionStatus />
 <slot />
 <ToastContainer />
