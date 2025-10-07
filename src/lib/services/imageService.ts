@@ -18,12 +18,10 @@ export interface DailyLimitCheck {
 /**
  * Image Service
  * Handles image uploads via ImageKit.io with daily limits
- * Client-side uses hardcoded limits (15 images, 5MB)
- * Server-side validation with dynamic settings happens in API route
+ * Daily limit is dynamic from server settings (fallback to 15)
  */
 export class ImageService {
   private imagekit: ImageKit | null = null;
-  private readonly DAILY_LIMIT = 15;
 
   constructor() {
     // Initialize ImageKit client
@@ -41,36 +39,39 @@ export class ImageService {
   }
 
   /**
-   * Check if user can upload more images today
+   * Check if user can upload more images today (uses dynamic server-side limit)
    */
   async checkDailyLimit(userId: string): Promise<DailyLimitCheck> {
     try {
-      const { data, error } = await supabase.rpc('get_daily_photo_count', {
-        p_user_id: userId,
+      // Call server-side API that checks against dynamic settings
+      const response = await fetch('/api/images/check-limit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
       });
 
-      if (error) {
-        console.error('Check daily limit error:', error);
+      const data = await response.json();
+
+      if (!data.success) {
         return {
           allowed: false,
-          count: 0,
-          limit: this.DAILY_LIMIT,
-          error: 'Failed to check upload limit',
+          count: data.count || 0,
+          limit: data.limit || 15,
+          error: data.error || 'Failed to check upload limit',
         };
       }
 
-      const count = data as number;
       return {
-        allowed: count < this.DAILY_LIMIT,
-        count,
-        limit: this.DAILY_LIMIT,
+        allowed: data.allowed,
+        count: data.count,
+        limit: data.limit,
       };
     } catch (error) {
       console.error('Check daily limit error:', error);
       return {
         allowed: false,
         count: 0,
-        limit: this.DAILY_LIMIT,
+        limit: 15, // Fallback
         error: 'An unexpected error occurred',
       };
     }
@@ -115,10 +116,22 @@ export class ImageService {
         return { success: false, error: 'File must be an image' };
       }
 
-      // Max file size: 5MB (hardcoded for client-side validation)
-      // Server-side validation with dynamic settings happens in API route
-      if (file.size > 5 * 1024 * 1024) {
-        return { success: false, error: 'Image must be smaller than 5MB' };
+      // Get dynamic max file size from server
+      let maxSizeMB = 5; // Fallback
+      try {
+        const settingsResponse = await fetch('/api/images/settings');
+        const settingsData = await settingsResponse.json();
+        if (settingsData.success) {
+          maxSizeMB = settingsData.maxSizeMB;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch image settings, using default:', err);
+      }
+
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+      if (file.size > maxSizeBytes) {
+        return { success: false, error: `Image must be smaller than ${maxSizeMB}MB` };
       }
 
       if (!this.imagekit) {
