@@ -66,11 +66,15 @@
         uploadProgress = progress;
       });
 
+      console.log('Upload result received:', result);
+
       if (result.success && result.imageUrl) {
+        console.log('Dispatching upload event with imageUrl:', result.imageUrl);
         dispatch('upload', { imageUrl: result.imageUrl });
         await loadUploadCount(); // Refresh count
       } else {
         error = result.error || 'Upload failed';
+        console.error('Upload failed:', error);
       }
     } catch (err) {
       error = 'An unexpected error occurred';

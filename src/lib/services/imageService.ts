@@ -170,12 +170,26 @@ export class ImageService {
         );
       });
 
-      // Track upload in database (skip for now - anonymous users don't need tracking)
-      // TODO: Implement client-side rate limiting if needed
+      // Debug log to see what ImageKit returns
+      console.log('ImageKit upload result:', uploadResult);
+
+      // Extract the correct URL from ImageKit response
+      // ImageKit returns: { url, thumbnailUrl, fileId, name, filePath, etc. }
+      const imageUrl = uploadResult.url || uploadResult.thumbnailUrl;
+
+      if (!imageUrl) {
+        console.error('ImageKit did not return a URL. Full result:', uploadResult);
+        return {
+          success: false,
+          error: 'Image uploaded but no URL returned from ImageKit',
+        };
+      }
+
+      console.log('Extracted image URL:', imageUrl);
 
       return {
         success: true,
-        imageUrl: uploadResult.url,
+        imageUrl: imageUrl,
         fileId: uploadResult.fileId,
       };
     } catch (error) {

@@ -27,6 +27,22 @@ SELECT cron.schedule(
   'SELECT cleanup_stale_presence();'
 );
 
+-- Schedule cleanup_offline_users to run every minute
+-- This marks users as offline if last_seen > 2 minutes
+SELECT cron.schedule(
+  'cleanup-offline-users',
+  '* * * * *',                      -- Run every minute
+  'SELECT cleanup_offline_users();'
+);
+
+-- Schedule cleanup_inactive_anonymous_users to run daily at 3 AM
+-- This deletes anonymous users inactive for 48+ hours (reduces MAU costs)
+SELECT cron.schedule(
+  'cleanup-inactive-anonymous',
+  '0 3 * * *',                      -- Run daily at 3:00 AM UTC
+  'SELECT cleanup_inactive_anonymous_users();'
+);
+
 -- Verify the cron jobs were created
 SELECT * FROM cron.job;
 
@@ -35,5 +51,7 @@ SELECT * FROM cron.job;
 -- - pg_cron runs in UTC timezone
 -- - Messages older than 8 hours will be deleted every hour
 -- - Stale presence records will be cleaned up every minute
+-- - Offline users (last_seen > 2 minutes) are marked as offline every minute
+-- - Inactive anonymous users (48+ hours) are deleted daily at 3 AM
 -- - To check job runs: SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
 -- ============================================

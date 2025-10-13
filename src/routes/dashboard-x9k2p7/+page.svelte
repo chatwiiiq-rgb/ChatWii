@@ -152,6 +152,17 @@
   let banReason = '';
   let banLoading = false;
 
+  // Kick modal
+  let showKickModal = false;
+  let kickUserId = '';
+  let kickUserNickname = '';
+  let kickReason = '';
+  let kickLoading = false;
+
+  // Messages
+  let errorMessage = '';
+  let successMessage = '';
+
   onMount(async () => {
     // Subscribe to presence channel to get real-time online count
     subscribeToPresence();
@@ -431,6 +442,46 @@
     showBanModal = true;
   }
 
+  function openKickModal(userId: string, nickname: string) {
+    kickUserId = userId;
+    kickUserNickname = nickname;
+    kickReason = '';
+    showKickModal = true;
+  }
+
+  async function handleKick() {
+    if (!kickReason.trim()) {
+      alert('Please enter a kick reason');
+      return;
+    }
+
+    kickLoading = true;
+    try {
+      const response = await fetch(`/api/admin/users/${kickUserId}/kick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: kickReason })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showKickModal = false;
+        successMessage = data.message || 'User kicked successfully';
+        setTimeout(() => { successMessage = ''; }, 3000);
+      } else {
+        const data = await response.json();
+        errorMessage = data.error || 'Failed to kick user';
+        setTimeout(() => { errorMessage = ''; }, 3000);
+      }
+    } catch (err) {
+      errorMessage = 'An error occurred while kicking user';
+      setTimeout(() => { errorMessage = ''; }, 3000);
+      console.error('Kick user error:', err);
+    } finally {
+      kickLoading = false;
+    }
+  }
+
   async function handleBan() {
     if (!banReason.trim()) {
       alert('Please enter a ban reason');
@@ -639,6 +690,24 @@
 
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Success/Error Messages -->
+    {#if successMessage}
+      <div class="mb-6 p-4 bg-green-100 dark:bg-green-900/30 border border-green-500 rounded-lg flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-600 dark:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span class="text-green-800 dark:text-green-200">{successMessage}</span>
+      </div>
+    {/if}
+    {#if errorMessage}
+      <div class="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-500 rounded-lg flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span class="text-red-800 dark:text-red-200">{errorMessage}</span>
+      </div>
+    {/if}
+
     {#if activeTab === 'analytics'}
     <!-- Analytics Content -->
     {#if isLoading}
@@ -1135,6 +1204,12 @@
 
               <!-- Action Buttons -->
               <div class="ml-4 flex flex-col gap-2">
+                <button
+                  on:click={() => openKickModal(report.reported.id, report.reported.nickname)}
+                  class="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  Kick User
+                </button>
                 {#if report.reported.status !== 'banned'}
                   <button
                     on:click={() => openBanModal(report.reported.id, report.reported.nickname)}
@@ -1362,6 +1437,14 @@
                 <!-- Actions -->
                 <td class="px-6 py-4">
                   <div class="flex items-center justify-end gap-2">
+                    {#if user.role !== 'admin'}
+                      <button
+                        on:click={() => openKickModal(user.id, user.nickname)}
+                        class="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                      >
+                        Kick
+                      </button>
+                    {/if}
                     {#if user.status === 'banned'}
                       <button
                         on:click={() => unbanUser(user.id, 'users')}
@@ -1767,6 +1850,53 @@
             Deleting...
           {:else}
             Delete User
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Kick User Modal -->
+{#if showKickModal}
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl max-w-md w-full p-6">
+      <h3 class="text-xl font-bold text-neutral-900 dark:text-white mb-4">Kick User</h3>
+      <p class="text-neutral-600 dark:text-neutral-400 mb-4">
+        You are about to kick <span class="font-semibold">{kickUserNickname}</span>. They will be disconnected but can rejoin immediately.
+      </p>
+
+      <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+        Kick Reason <span class="text-orange-500">*</span>
+      </label>
+      <textarea
+        bind:value={kickReason}
+        placeholder="Enter the reason for kicking this user..."
+        rows="4"
+        class="w-full px-4 py-2 bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4"
+      ></textarea>
+
+      <div class="flex gap-3">
+        <button
+          on:click={() => showKickModal = false}
+          disabled={kickLoading}
+          class="flex-1 px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={handleKick}
+          disabled={kickLoading || !kickReason.trim()}
+          class="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {#if kickLoading}
+            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Kicking...
+          {:else}
+            Kick User
           {/if}
         </button>
       </div>

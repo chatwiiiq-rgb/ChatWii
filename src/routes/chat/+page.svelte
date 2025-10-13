@@ -9,6 +9,7 @@
   import { messageService } from '$lib/services/messageService';
   import { reportService } from '$lib/services/reportService';
   import type { Message } from '$lib/services/messageService';
+  import { supabase } from '$lib/supabase';
   import ThemeToggle from '$lib/components/shared/ThemeToggle.svelte';
   import UserListItem from '$lib/components/chat/UserListItem.svelte';
   import MessageList from '$lib/components/chat/MessageList.svelte';
@@ -27,6 +28,9 @@
   let selectedUser: PresenceUser | null = null;
   let messages: Message[] = [];
   let loadingMessages = false;
+  let loadingMoreMessages = false;
+  let hasMoreMessages = false;
+  let totalMessageCount = 0;
   let messageCount = 0;
   let rateLimit = 25;
   let showHeaderMenu = false;
@@ -47,6 +51,12 @@
   let showFilterModal = false;
   let showMobileUserList = false; // Mobile user list overlay
 
+  // Kick notification state
+  let showKickNotification = false;
+  let kickReason = '';
+  let kickCountdown = 5;
+  let kickChannel: any = null;
+
   // Filter state
   let filterGender: string[] = []; // ['male', 'female']
   let filterAgeMin = 18;
@@ -60,7 +70,14 @@
 
     if (savedInbox) {
       try {
-        inboxConversations = JSON.parse(savedInbox);
+        const parsedInbox = JSON.parse(savedInbox);
+        // Filter out messages older than 8 hours on load
+        const eightHoursInMs = 8 * 60 * 60 * 1000;
+        const now = Date.now();
+        inboxConversations = parsedInbox.filter((conv: any) => {
+          const messageAge = now - new Date(conv.last_message_time).getTime();
+          return messageAge < eightHoursInMs;
+        });
       } catch (e) {
         console.error('Failed to load inbox:', e);
       }
@@ -68,7 +85,14 @@
 
     if (savedHistory) {
       try {
-        historyConversations = JSON.parse(savedHistory);
+        const parsedHistory = JSON.parse(savedHistory);
+        // Filter out messages older than 8 hours on load
+        const eightHoursInMs = 8 * 60 * 60 * 1000;
+        const now = Date.now();
+        historyConversations = parsedHistory.filter((conv: any) => {
+          const messageAge = now - new Date(conv.last_message_time).getTime();
+          return messageAge < eightHoursInMs;
+        });
       } catch (e) {
         console.error('Failed to load history:', e);
       }
@@ -85,15 +109,27 @@
     localStorage.setItem('chatwii_history', JSON.stringify(historyConversations));
   }
 
-  // Sort inbox by most recent message time
-  $: sortedInbox = [...inboxConversations].sort((a, b) => {
-    return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
-  });
+  // Filter and sort inbox by most recent message time (exclude messages older than 8 hours)
+  $: sortedInbox = [...inboxConversations]
+    .filter(conv => {
+      const messageAge = Date.now() - new Date(conv.last_message_time).getTime();
+      const eightHoursInMs = 8 * 60 * 60 * 1000;
+      return messageAge < eightHoursInMs;
+    })
+    .sort((a, b) => {
+      return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+    });
 
-  // Sort history by most recent message time
-  $: sortedHistory = [...historyConversations].sort((a, b) => {
-    return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
-  });
+  // Filter and sort history by most recent message time (exclude messages older than 8 hours)
+  $: sortedHistory = [...historyConversations]
+    .filter(conv => {
+      const messageAge = Date.now() - new Date(conv.last_message_time).getTime();
+      const eightHoursInMs = 8 * 60 * 60 * 1000;
+      return messageAge < eightHoursInMs;
+    })
+    .sort((a, b) => {
+      return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+    });
 
   $: isSelectedUserBlocked = selectedUser ? $blockedUserIds.includes(selectedUser.user_id) : false;
 
@@ -125,6 +161,24 @@
 
     return true;
   });
+
+  // Cleanup old conversations from localStorage (older than 8 hours)
+  function cleanupOldConversations() {
+    const eightHoursInMs = 8 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // Clean inbox
+    inboxConversations = inboxConversations.filter(conv => {
+      const messageAge = now - new Date(conv.last_message_time).getTime();
+      return messageAge < eightHoursInMs;
+    });
+
+    // Clean history
+    historyConversations = historyConversations.filter(conv => {
+      const messageAge = now - new Date(conv.last_message_time).getTime();
+      return messageAge < eightHoursInMs;
+    });
+  }
 
   onMount(async () => {
     // Check if user is authenticated
@@ -197,6 +251,9 @@
               inboxConversations = [...inboxConversations, {
                 user_id: otherUserId,
                 nickname: otherUser.nickname,
+                gender: otherUser.gender,
+                age: otherUser.age,
+                country: otherUser.country,
                 last_message: messagePreview,
                 last_message_time: message.created_at,
                 unread: 1
@@ -218,6 +275,9 @@
               historyConversations = [...historyConversations, {
                 user_id: otherUserId,
                 nickname: otherUser.nickname,
+                gender: otherUser.gender,
+                age: otherUser.age,
+                country: otherUser.country,
                 last_message: messagePreview,
                 last_message_time: message.created_at
               }];
@@ -228,6 +288,33 @@
         // Update message count every 5 seconds
         updateMessageCount();
         setInterval(updateMessageCount, 5000);
+
+        // Cleanup old conversations every minute
+        cleanupOldConversations();
+        setInterval(cleanupOldConversations, 60000);
+
+        // Subscribe to personal kick channel for admin actions
+        kickChannel = supabase.channel(`user:${user.id}`);
+        kickChannel
+          .on('broadcast', { event: 'kick' }, (payload: any) => {
+            kickReason = payload.payload.reason || 'No reason provided';
+            showKickNotification = true;
+
+            // Start countdown
+            let countdown = 5;
+            kickCountdown = countdown;
+            const timer = setInterval(() => {
+              countdown--;
+              kickCountdown = countdown;
+              if (countdown <= 0) {
+                clearInterval(timer);
+                // Logout and redirect
+                AuthService.signOut();
+                goto('/');
+              }
+            }, 1000);
+          })
+          .subscribe();
       }
     }
 
@@ -250,6 +337,10 @@
     await presenceStore.leave();
     // Clear block store
     blockStore.clear();
+    // Unsubscribe from kick channel
+    if (kickChannel) {
+      await kickChannel.unsubscribe();
+    }
   });
 
   async function updateMessageCount() {
@@ -289,9 +380,44 @@
     // Load conversation history
     if (userProfile) {
       loadingMessages = true;
-      messages = await messageService.loadConversation(userProfile.id, user.user_id);
+
+      // Get total message count
+      totalMessageCount = await messageService.getConversationCount(userProfile.id, user.user_id);
+
+      // Load initial batch (100 messages)
+      messages = await messageService.loadConversation(userProfile.id, user.user_id, 100, 0);
+
+      // Check if there are more messages
+      hasMoreMessages = totalMessageCount > messages.length;
+
       loadingMessages = false;
     }
+  }
+
+  async function handleLoadMoreMessages() {
+    if (!userProfile || !selectedUser || loadingMoreMessages) return;
+
+    loadingMoreMessages = true;
+
+    // Load next batch
+    const currentOffset = messages.length;
+    const olderMessages = await messageService.loadConversation(
+      userProfile.id,
+      selectedUser.user_id,
+      100,
+      currentOffset
+    );
+
+    // Prepend older messages to the beginning
+    messages = [...olderMessages, ...messages];
+
+    // Update total count in case new messages were added
+    totalMessageCount = await messageService.getConversationCount(userProfile.id, selectedUser.user_id);
+
+    // Check if there are still more messages
+    hasMoreMessages = totalMessageCount > messages.length;
+
+    loadingMoreMessages = false;
   }
 
   async function handleSendMessage(event: CustomEvent<string>) {
@@ -323,6 +449,28 @@
       // Replace temp message with real message
       messages = messages.map(m => m.id === tempMessage.id ? result.message! : m);
 
+      // Manually update history (don't rely on real-time callback)
+      const messagePreview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+      const existingHistoryIndex = historyConversations.findIndex(c => c.user_id === selectedUser.user_id);
+      if (existingHistoryIndex >= 0) {
+        historyConversations[existingHistoryIndex] = {
+          ...historyConversations[existingHistoryIndex],
+          last_message: messagePreview,
+          last_message_time: result.message.created_at
+        };
+        historyConversations = [...historyConversations];
+      } else {
+        historyConversations = [...historyConversations, {
+          user_id: selectedUser.user_id,
+          nickname: selectedUser.nickname,
+          gender: selectedUser.gender,
+          age: selectedUser.age,
+          country: selectedUser.country,
+          last_message: messagePreview,
+          last_message_time: result.message.created_at
+        }];
+      }
+
       // Update message count
       await updateMessageCount();
     } else {
@@ -344,7 +492,13 @@
   async function handleImageUpload(event: CustomEvent<string>) {
     if (!userProfile || !selectedUser) return;
 
+    console.log('handleImageUpload received event:', event);
+    console.log('handleImageUpload event.detail:', event.detail);
+    console.log('handleImageUpload event.detail type:', typeof event.detail);
+
     const imageUrl = event.detail;
+
+    console.log('Image URL to save:', imageUrl);
 
     // Optimistically add message to UI
     const tempMessage: Message = {
@@ -359,6 +513,8 @@
 
     messages = [...messages, tempMessage];
 
+    console.log('Sending message with content:', imageUrl);
+
     // Send message (blocking check happens server-side)
     const result = await messageService.sendMessage({
       senderId: userProfile.id,
@@ -367,9 +523,33 @@
       messageType: 'image',
     });
 
+    console.log('Message send result:', result);
+
     if (result.success && result.message) {
       // Replace temp message with real message
       messages = messages.map(m => m.id === tempMessage.id ? result.message! : m);
+
+      // Manually update history (don't rely on real-time callback)
+      const messagePreview = '📷 Image';
+      const existingHistoryIndex = historyConversations.findIndex(c => c.user_id === selectedUser.user_id);
+      if (existingHistoryIndex >= 0) {
+        historyConversations[existingHistoryIndex] = {
+          ...historyConversations[existingHistoryIndex],
+          last_message: messagePreview,
+          last_message_time: result.message.created_at
+        };
+        historyConversations = [...historyConversations];
+      } else {
+        historyConversations = [...historyConversations, {
+          user_id: selectedUser.user_id,
+          nickname: selectedUser.nickname,
+          gender: selectedUser.gender,
+          age: selectedUser.age,
+          country: selectedUser.country,
+          last_message: messagePreview,
+          last_message_time: result.message.created_at
+        }];
+      }
 
       // Update message count
       await updateMessageCount();
@@ -719,6 +899,9 @@
             {messages}
             currentUserId={userProfile?.id}
             loading={loadingMessages}
+            {hasMoreMessages}
+            loadingMore={loadingMoreMessages}
+            on:loadmore={handleLoadMoreMessages}
           />
 
           <!-- Blocked notification (positioned above message input) -->
@@ -890,6 +1073,38 @@
       on:accept={handleRulesAccept}
       on:decline={handleRulesDecline}
     />
+
+    <!-- Kick Notification Banner -->
+    {#if showKickNotification}
+      <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-2xl p-6 max-w-md w-full border-4 border-red-500">
+          <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+              <svg class="h-10 w-10 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-red-600 dark:text-red-500 mb-3">
+              You've Been Kicked!
+            </h3>
+            <p class="text-neutral-700 dark:text-neutral-300 mb-4">
+              <strong>Reason:</strong> {kickReason}
+            </p>
+            <div class="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-4 mb-4">
+              <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
+                You will be disconnected in:
+              </p>
+              <p class="text-5xl font-bold text-red-600 dark:text-red-500">
+                {kickCountdown}
+              </p>
+            </div>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">
+              You can rejoin immediately after being disconnected.
+            </p>
+          </div>
+        </div>
+      </div>
+    {/if}
 
     <!-- Logout Confirmation Dialog -->
     {#if showLogoutConfirm}

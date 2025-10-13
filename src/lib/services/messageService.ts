@@ -159,7 +159,7 @@ export class MessageService {
   /**
    * Load conversation history with a specific user
    */
-  async loadConversation(userId: string, otherUserId: string, limit = 50): Promise<Message[]> {
+  async loadConversation(userId: string, otherUserId: string, limit = 100, offset = 0): Promise<Message[]> {
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -167,18 +167,43 @@ export class MessageService {
         .or(
           `and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`
         )
-        .order('created_at', { ascending: true })
-        .limit(limit);
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       if (error) {
         console.error('Load conversation error:', error);
         return [];
       }
 
-      return (data as Message[]) || [];
+      // Return in reverse order (oldest first) for proper display
+      return ((data as Message[]) || []).reverse();
     } catch (error) {
       console.error('Load conversation error:', error);
       return [];
+    }
+  }
+
+  /**
+   * Get total message count for a conversation
+   */
+  async getConversationCount(userId: string, otherUserId: string): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .or(
+          `and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`
+        );
+
+      if (error) {
+        console.error('Get conversation count error:', error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      console.error('Get conversation count error:', error);
+      return 0;
     }
   }
 

@@ -248,6 +248,10 @@ export interface Database {
         Args: Record<string, never>
         Returns: void
       }
+      cleanup_offline_users: {
+        Args: Record<string, never>
+        Returns: void
+      }
     }
     Enums: {
       [_ in never]: never
